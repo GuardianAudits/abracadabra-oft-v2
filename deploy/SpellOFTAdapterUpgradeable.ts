@@ -5,6 +5,7 @@ import { getDeploymentAddressAndAbi } from '@layerzerolabs/lz-evm-sdk-v2'
 
 const deploymentName = 'SpellOFTAdapterUpgradeable';
 const contractName = 'AbraOFTAdapterUpgradeable'
+const salt = "spell-oft-upgradeable-1734060795"
 
 const deploy: DeployFunction = async (hre) => {
     const { deploy } = hre.deployments
@@ -13,16 +14,11 @@ const deploy: DeployFunction = async (hre) => {
 
     const { address, abi } = getDeploymentAddressAndAbi(hre.network.name, 'EndpointV2')
     const endpointV2Deployment = new Contract(address, abi, signer)
-    try {
-        const { address } = getDeploymentAddressAndAbi(hre.network.name, 'SpellOFTUpgradeable')
-        console.log(`Proxy: ${address}`)
-    } catch (e) {
-        console.log(`Proxy not found`)
-    }
 
     await deploy(deploymentName, {
+        deterministicDeployment: "0x" + Buffer.from(salt).toString('hex'),
         from: signer.address,
-        args: ['0x', endpointV2Deployment.address], // replace '0x' with the address of the ERC-20 token
+        args: ['0x090185f2135308BaD17527004364eBcC2D37e5F6', endpointV2Deployment.address], // SPELL address
         log: true,
         waitConfirmations: 1,
         skipIfAlreadyDeployed: false,

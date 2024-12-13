@@ -5,6 +5,7 @@ import { getDeploymentAddressAndAbi } from '@layerzerolabs/lz-evm-sdk-v2'
 
 const deploymentName = 'SpellOFTUpgradeable'
 const contractName = 'AbraOFTUpgradeable'
+const salt = "spell-oft-upgradeable-1734060795"
 
 const deploy: DeployFunction = async (hre) => {
     const { deploy } = hre.deployments
@@ -15,6 +16,7 @@ const deploy: DeployFunction = async (hre) => {
     const endpointV2Deployment = new Contract(address, abi, signer)
 
     await deploy(deploymentName, {
+        deterministicDeployment: "0x" + Buffer.from(salt).toString('hex'),
         from: signer.address,
         args: [endpointV2Deployment.address],
         log: true,

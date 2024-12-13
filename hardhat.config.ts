@@ -3,7 +3,7 @@
 // To make use of automatic environment setup:
 // - Duplicate .env.example file and name it .env
 // - Fill in the environment variables
-import 'dotenv/config'
+import "dotenv-defaults/config"
 
 import '@openzeppelin/hardhat-upgrades'
 import 'hardhat-deploy'
@@ -57,7 +57,7 @@ const config: HardhatUserConfig = {
     networks: {
         'ethereum-mainnet': {
             eid: EndpointId.ETHEREUM_V2_MAINNET,
-            url: process.env.MAINNET_RPC_URL || 'https://cloudflare-eth.com',
+            url: process.env.MAINNET_RPC_URL || '',
             accounts,
             verify: {
                 etherscan: {
@@ -67,7 +67,7 @@ const config: HardhatUserConfig = {
         },
         'arbitrum-mainnet': {
             eid: EndpointId.ARBITRUM_V2_MAINNET,
-            url: process.env.ARBITRUM_RPC_URL || 'https://arbitrum.publicnode.com',
+            url: process.env.ARBITRUM_RPC_URL || '',
             accounts,
             verify: {
                 etherscan: {
