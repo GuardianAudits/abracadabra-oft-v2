@@ -19,7 +19,7 @@ describe('MyOFTUpgradeable Test', () => {
     let mockEndpointV2B: Contract
 
     before(async function () {
-        MyOFT = await ethers.getContractFactory('MyOFTUpgradeable')
+        MyOFT = await ethers.getContractFactory('AbraOFTUpgradeable')
 
         // Fetching the first three signers (accounts) from Hardhat's local Ethereum network
         const signers = await ethers.getSigners()
@@ -54,7 +54,7 @@ describe('MyOFTUpgradeable Test', () => {
 
     it('should upgrade', async () => {
         // Deploying the upgradeable contract
-        const MyOFTUpgradeable = await ethers.getContractFactory('MyOFTUpgradeable')
+        const MyOFTUpgradeable = await ethers.getContractFactory('AbraOFTUpgradeable')
         const myOFTUpgradeable = await upgrades.deployProxy(MyOFTUpgradeable, ['MyOFT', 'MOFT', ownerA.address], {
             initializer: 'initialize',
             constructorArgs: [mockEndpointV2A.address],
@@ -65,7 +65,7 @@ describe('MyOFTUpgradeable Test', () => {
         )
 
         // Upgrade the contract to the mock, so it has a "mint" function
-        const MyOFTUpgradeableMock = await ethers.getContractFactory('MyOFTUpgradeableMock')
+        const MyOFTUpgradeableMock = await ethers.getContractFactory('AbraOFTUpgradeableMock')
         const myOFTUpgradeableMock = await upgrades.upgradeProxy(myOFTUpgradeable.address, MyOFTUpgradeableMock, {
             constructorArgs: [mockEndpointV2A.address],
             unsafeAllow: ['constructor', 'state-variable-immutable'],
