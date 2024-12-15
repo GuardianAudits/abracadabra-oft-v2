@@ -5,12 +5,12 @@ import { generateConnectionsConfig } from "@layerzerolabs/metadata-tools";
 
 const mainnetContract: OmniPointHardhat = {
     eid: EndpointId.ETHEREUM_V2_MAINNET,
-    contractName: 'SpellOFTAdapterUpgradeable',
+    contractName: 'SpellOFT',
 }
 
 const arbitrumContract: OmniPointHardhat = {
     eid: EndpointId.ARBITRUM_V2_MAINNET,
-    contractName: 'SpellOFTUpgradeable',
+    contractName: 'SpellOFT',
 }
 
 const EVM_ENFORCED_OPTIONS: OAppEnforcedOption[] = [

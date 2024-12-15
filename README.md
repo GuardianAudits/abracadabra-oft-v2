@@ -1,66 +1,38 @@
-## Foundry
+# Requirements
+- Bun
+- Foundry (for testing)
 
-**Foundry is a blazing fast, portable and modular toolkit for Ethereum application development written in Rust.**
-
-Foundry consists of:
-
--   **Forge**: Ethereum testing framework (like Truffle, Hardhat and DappTools).
--   **Cast**: Swiss army knife for interacting with EVM smart contracts, sending transactions and getting chain data.
--   **Anvil**: Local Ethereum node, akin to Ganache, Hardhat Network.
--   **Chisel**: Fast, utilitarian, and verbose solidity REPL.
-
-## Documentation
-
-https://book.getfoundry.sh/
-
-## Usage
-
-### Build
-
-```shell
-$ forge build
+# Setup
+```
+bun install
 ```
 
-### Test
-
-```shell
-$ forge test
+# Compile
+```
+bunx hardhat compile
 ```
 
-### Format
-
-```shell
-$ forge fmt
+# Test
+```
+forge test
 ```
 
-### Gas Snapshots
-
-```shell
-$ forge snapshot
+# Deploy
+```
+bunx hardhat deploy --network <network-name> --tags <tag>
 ```
 
-### Anvil
-
-```shell
-$ anvil
+# Deploy for LayerZero
+```
+bunx hardhat lz:deploy --tags <deployement-name> --networks <network-name>
 ```
 
-### Deploy
-
-```shell
-$ forge script script/Counter.s.sol:CounterScript --rpc-url <your_rpc_url> --private-key <your_private_key>
+# Verify
+```
+bunx hardhat etherscan-verify --network <network-name>
 ```
 
-### Cast
-
-```shell
-$ cast <subcommand>
+# LayerZero Wiring
 ```
-
-### Help
-
-```shell
-$ forge --help
-$ anvil --help
-$ cast --help
+bunx hardhat lz:oapp:wire --oapp-config layerzero.config.ts
 ```
