@@ -5,6 +5,11 @@ import { IFeeHandler } from "./interfaces/IFeeHandler.sol";
 import { IAggregator } from "./interfaces/IAggregator.sol";
 import { Ownable } from "@openzeppelin/contracts/access/Ownable.sol";
 
+enum QuoteType {
+    Oracle,
+    Fixed
+}
+
 contract FeeHandler is IFeeHandler, Ownable {
     event FixedNativeFeeChanged(uint256 previous, uint256 current);
     event OracleImplementationChange(IAggregator indexed previous, IAggregator indexed current);
@@ -14,11 +19,6 @@ contract FeeHandler is IFeeHandler, Ownable {
 
     error InvalidQuoteType(QuoteType);
     error Unauthorized();
-
-    enum QuoteType {
-        Oracle,
-        Fixed
-    }
 
     uint256 public constant DEFAULT_USD_FEE = 1e18;
 

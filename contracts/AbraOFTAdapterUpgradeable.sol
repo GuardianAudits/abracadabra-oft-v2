@@ -10,7 +10,7 @@ import { SenderWithFees } from "./SenderWithFees.sol";
 contract AbraOFTAdapterUpgradeable is OFTAdapterUpgradeable, SenderWithFees {
     constructor(address _token, address _lzEndpoint) OFTAdapterUpgradeable(_token, _lzEndpoint) {}
 
-    function initialize(address _delegate) public initializer {
+    function initialize(address _delegate) public virtual initializer {
         __OFTAdapter_init(_delegate);
         __Ownable_init(_delegate);
     }

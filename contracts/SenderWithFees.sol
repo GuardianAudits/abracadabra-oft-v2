@@ -35,10 +35,6 @@ abstract contract SenderWithFees is OAppSenderUpgradeable {
             );
         }
 
-        if (msg.value < _fee.nativeFee + protocolNativeFees) {
-            revert NotEnoughNative(msg.value);
-        }
-
         if (_fee.lzTokenFee > 0) {
             _payLzToken(_fee.lzTokenFee);
         }

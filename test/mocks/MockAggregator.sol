@@ -12,4 +12,4 @@ contract MockAggregator {
     function latestAnswer() external view returns (int256) {
         return answer;
     }
-} 
+}
