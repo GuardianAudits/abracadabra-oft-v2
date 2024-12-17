@@ -70,12 +70,12 @@ task("bridge", "Bridge tokens from one chain to another")
     if (networkConfig.type === 'adapter') {
       const adapterConfig = networkConfig as { type: 'adapter', underlying: string };
       const underlyingToken = await hre.ethers.getContractAt("IERC20", adapterConfig.underlying);
-      const allowance = await underlyingToken.allowance(sender.address, underlyingToken.address);
+      const allowance = await underlyingToken.allowance(sender.address, oftContract.address);
       //console.log(`allowance: ${allowance}`);
 
       if (allowance.lt(amountInWei)) {
         console.log(`Approving ${tokenSymbol} tokens to OFT adapter...`);
-        const approveTx = await underlyingToken.approve(underlyingToken.address, amountInWei);
+        const approveTx = await underlyingToken.approve(oftContract.address, amountInWei);
         await approveTx.wait();
         console.log("Approval successful!");
       }
