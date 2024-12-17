@@ -27,6 +27,7 @@
     "@layerzerolabs/lz-evm-sdk-v2": "^3.0.21",
     "@layerzerolabs/lz-evm-v1-0.7": "^3.0.12",
     "@layerzerolabs/lz-v2-utilities": "^3.0.12",
+    "@layerzerolabs/metadata-tools": "^0.0.2",
     "@layerzerolabs/oapp-evm": "^0.3.0",
     "@layerzerolabs/oapp-evm-upgradeable": "^0.1.0",
     "@layerzerolabs/oft-evm": "^3.0.0",
