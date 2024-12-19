@@ -36,3 +36,13 @@ bunx hardhat etherscan-verify --network <network-name>
 ```
 bunx hardhat lz:oapp:wire --oapp-config layerzero.config.ts
 ```
+
+# Bridging example
+```
+ bunx hardhat bridge \
+  --token SPELL \
+  --network ethereum-mainnet \
+  --dst-chain arbitrum-mainnet \
+  --to 0xfB3485c2e209A5cfBDC1447674256578f1A80eE3 \
+  --amount 1
+```

@@ -38,7 +38,7 @@ const EVM_ENFORCED_OPTIONS: OAppEnforcedOption[] = [
 export default async function () {
     // [srcContract, dstContract, [requiredDVNs, [optionalDVNs, threshold]], [srcToDstConfirmations, dstToSrcConfirmations]], [enforcedOptionsSrcToDst, enforcedOptionsDstToSrc]
     const connections = await generateConnectionsConfig([
-        [mainnetContract, arbitrumContract, [['LayerZero Labs'], []], [1, 1], [EVM_ENFORCED_OPTIONS, EVM_ENFORCED_OPTIONS]],
+        [mainnetContract, arbitrumContract, [['LayerZero Labs', 'MIM'], []], [1, 1], [EVM_ENFORCED_OPTIONS, EVM_ENFORCED_OPTIONS]],
     ]);
 
     return {
