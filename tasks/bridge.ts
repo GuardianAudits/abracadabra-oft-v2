@@ -34,6 +34,23 @@ const TOKEN_CONFIGS = {
         deploymentName: 'SpellOFT',
       }
     }
+  },
+  BSPELL: {
+    symbol: 'bSPELL',
+    decimals: 18,
+    networks: {
+      'arbitrum-mainnet': {
+        type: 'adapter',
+        contractName: 'AbraOFTAdapterUpgradeable',
+        underlying: '0x34FbFB3e95011956aBAD82796f466bA88895f214',
+        deploymentName: 'BoundSpellOFT',
+      },
+      'ethereum-mainnet': {
+        type: 'oft',
+        contractName: 'AbraOFTUpgradeable',
+        deploymentName: 'BoundSpellOFT',
+      }
+    }
   }
 };
 
