@@ -42,7 +42,7 @@ const TOKEN_CONFIGS = {
       'arbitrum-mainnet': {
         type: 'adapter',
         contractName: 'AbraOFTAdapterUpgradeable',
-        underlying: '0x34FbFB3e95011956aBAD82796f466bA88895f214',
+        underlying: '0x19595E8364644F038bDda1d099820654900c3042',
         deploymentName: 'BoundSpellOFT',
       },
       'ethereum-mainnet': {
