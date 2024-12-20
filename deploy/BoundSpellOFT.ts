@@ -3,12 +3,12 @@ import { type DeployFunction } from 'hardhat-deploy/types'
 import { getDeploymentAddressAndAbi } from '@layerzerolabs/lz-evm-sdk-v2'
 
 const deploymentName = 'BoundSpellOFT'
-const salt = "bound-spell-oft-1734060795"
+const salt = "bound-spell-oft-1734060796"
 
 const configurations = {
     'arbitrum-mainnet': {
         contractName: 'AbraOFTAdapterUpgradeable',
-        args: (endpointAddress: string) => ['0x34FbFB3e95011956aBAD82796f466bA88895f214', endpointAddress], // SPELL OFT address
+        args: (endpointAddress: string) => ['0x19595E8364644F038bDda1d099820654900c3042', endpointAddress], // bSPELL ERC20 address
         initializeArgs: (signer: string) => [signer],
         feeHandler: '0xE66BE95FE4E3889a66925d996AF3E4dC173754a2'
     },
