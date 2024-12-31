@@ -8,7 +8,9 @@ import { MessagingFee, MessagingReceipt } from "@layerzerolabs/lz-evm-protocol-v
 import { SenderWithFees } from "./SenderWithFees.sol";
 
 contract AbraOFTAdapterUpgradeable is OFTAdapterUpgradeable, SenderWithFees {
-    constructor(address _token, address _lzEndpoint) OFTAdapterUpgradeable(_token, _lzEndpoint) {}
+    constructor(address _token, address _lzEndpoint) OFTAdapterUpgradeable(_token, _lzEndpoint) {
+        _disableInitializers();
+    }
 
     function initialize(address _delegate) public virtual initializer {
         __OFTAdapter_init(_delegate);
