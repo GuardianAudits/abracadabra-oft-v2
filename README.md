@@ -38,10 +38,6 @@ bunx hardhat etherscan-verify --network <network-name>
 bunx hardhat lz:oapp:wire --oapp-config layerzero.config.ts
 ```
 
-# LayerZero Wiring for Gnosis Safe
-```
-bunx hardhat lz:oapp:wire --oapp-config layerzero.config.ts --output-filename transactions.json
-```
 
 # Bridging example
 ```

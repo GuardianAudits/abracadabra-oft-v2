@@ -2,9 +2,7 @@ import { ExecutorOptionType } from "@layerzerolabs/lz-v2-utilities";
 import { OAppEdgeConfig, OAppEnforcedOption, OmniEdgeHardhat, OmniPointHardhat } from "@layerzerolabs/toolbox-hardhat";
 import { EndpointId } from "@layerzerolabs/lz-definitions";
 import { generateConnectionsConfig } from "@layerzerolabs/metadata-tools";
-
-const ETH_SAFE_ADDRESS = "0xDF2C270f610Dc35d8fFDA5B453E74db5471E126B";
-const ARB_SAFE_ADDRESS = "0xA71A021EF66B03E45E0d85590432DFCfa1b7174C";
+import { ETH_SAFE_ADDRESS, ARB_SAFE_ADDRESS } from "./hardhat.config";
 
 ///////////////////////////////////////////////////////
 /// SPELL
