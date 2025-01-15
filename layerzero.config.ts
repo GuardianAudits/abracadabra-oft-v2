@@ -30,6 +30,14 @@ const bSpellEthereumContract: OmniPointHardhat = {
     contractName: 'BoundSpellOFT',
 }
 
+///////////////////////////////////////////////////////
+/// MIM
+///////////////////////////////////////////////////////
+const mimEthereumContract: OmniPointHardhat = {
+    eid: EndpointId.ETHEREUM_V2_MAINNET,
+    contractName: 'MIMOFT',
+}
+
 const EVM_ENFORCED_OPTIONS: OAppEnforcedOption[] = [
     {
         msgType: 1,
@@ -87,6 +95,7 @@ export default async function () {
             { contract: spellArbitrumContract },
             { contract: bSpellEthereumContract },
             { contract: bSpellArbitrumContract },
+            { contract: mimEthereumContract },
         ],
         connections
     }
