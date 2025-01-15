@@ -39,7 +39,6 @@ const deploy: DeployFunction = async (hre) => {
         skipIfAlreadyDeployed: false,
         proxy: {
             proxyContract: 'OpenZeppelinTransparentProxy',
-            viaAdminContract: `${config.contractName}_ProxyAdmin`,
             owner: signer.address,
             execute: {
                 init: {
