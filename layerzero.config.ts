@@ -3,6 +3,9 @@ import { OAppEdgeConfig, OAppEnforcedOption, OmniEdgeHardhat, OmniPointHardhat }
 import { EndpointId } from "@layerzerolabs/lz-definitions";
 import { generateConnectionsConfig } from "@layerzerolabs/metadata-tools";
 
+const ETH_SAFE_ADDRESS = "0xDF2C270f610Dc35d8fFDA5B453E74db5471E126B";
+const ARB_SAFE_ADDRESS = "0xA71A021EF66B03E45E0d85590432DFCfa1b7174C";
+
 ///////////////////////////////////////////////////////
 /// SPELL
 ///////////////////////////////////////////////////////
@@ -72,11 +75,41 @@ export default async function () {
 
     return {
         contracts: [
-            { contract: spellEthereumContract },
-            { contract: spellArbitrumContract },
-            { contract: bSpellEthereumContract },
-            { contract: bSpellArbitrumContract },
-            { contract: mimEthereumContract },
+            {
+                contract: spellEthereumContract,
+                config: {
+                    owner: ETH_SAFE_ADDRESS,
+                    delegate: ETH_SAFE_ADDRESS,
+                },
+            },
+            {
+                contract: spellArbitrumContract,
+                config: {
+                    owner: ARB_SAFE_ADDRESS,
+                    delegate: ARB_SAFE_ADDRESS,
+                },
+            },
+            {
+                contract: bSpellEthereumContract,
+                config: {
+                    owner: ETH_SAFE_ADDRESS,
+                    delegate: ETH_SAFE_ADDRESS,
+                },
+            },
+            {
+                contract: bSpellArbitrumContract,
+                config: {
+                    owner: ARB_SAFE_ADDRESS,
+                    delegate: ARB_SAFE_ADDRESS,
+                },
+            },
+           /* {
+                contract: mimEthereumContract,
+                config: {
+                    owner: ETH_SAFE_ADDRESS,
+                    delegate: ETH_SAFE_ADDRESS,
+                },
+            },*/
         ],
         connections
     }

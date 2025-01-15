@@ -38,6 +38,11 @@ bunx hardhat etherscan-verify --network <network-name>
 bunx hardhat lz:oapp:wire --oapp-config layerzero.config.ts
 ```
 
+# LayerZero Wiring for Gnosis Safe
+```
+bunx hardhat lz:oapp:wire --oapp-config layerzero.config.ts --output-filename transactions.json
+```
+
 # Bridging example
 ```
  bunx hardhat bridge \
@@ -46,16 +51,4 @@ bunx hardhat lz:oapp:wire --oapp-config layerzero.config.ts
   --dst-chain arbitrum-mainnet \
   --to 0xfB3485c2e209A5cfBDC1447674256578f1A80eE3 \
   --amount 1
-```
-
-# Change ownerships
-
-Proxy Contract
-```
-cast send --rpc-url <rpc-url> <proxy-address> --private-key <private-key> "transferOwnership(address)" <new-owner-address>
-```
-
-Proxy Admin
-```
-cast send --rpc-url <rpc-url> <proxy-admin-address> --private-key <private-key> "transferOwnership(address)" <new-owner-address>
 ```
