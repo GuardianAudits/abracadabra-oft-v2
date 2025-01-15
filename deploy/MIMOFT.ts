@@ -10,7 +10,7 @@ const configurations = {
         contractName: 'AbraOFTAdapterUpgradeable',
         args: (endpointAddress: string) => ['0x99D8a9C45b2ecA8864373A26D1459e3Dff1e17F3', endpointAddress], // MIM address
         initializeArgs: (signer: string) => [signer],
-        //feeHandler: '0xE66BE95FE4E3889a66925d996AF3E4dC173754a2'
+        feeHandler: '0xE66BE95FE4E3889a66925d996AF3E4dC173754a2'
     },
     //'berachain': {
     //    contractName: 'AbraOFTUpgradeable',
@@ -39,6 +39,7 @@ const deploy: DeployFunction = async (hre) => {
         skipIfAlreadyDeployed: false,
         proxy: {
             proxyContract: 'OpenZeppelinTransparentProxy',
+            viaAdminContract: `${config.contractName}_ProxyAdmin`,
             owner: signer.address,
             execute: {
                 init: {
@@ -50,8 +51,8 @@ const deploy: DeployFunction = async (hre) => {
         contract: config.contractName
     })
 
-    //const oft = await hre.ethers.getContractAt('SenderWithFees', deployment.address)
-    //await (await oft.setFeeHandler(config.feeHandler)).wait()
+    const oft = await hre.ethers.getContractAt('SenderWithFees', deployment.address)
+    await (await oft.setFeeHandler(config.feeHandler)).wait()
 }
 
 deploy.tags = [deploymentName]
