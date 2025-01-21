@@ -29,6 +29,7 @@ const PRIVATE_KEY = process.env.PRIVATE_KEY
 
 export const ETH_SAFE_ADDRESS = "0xDF2C270f610Dc35d8fFDA5B453E74db5471E126B";
 export const ARB_SAFE_ADDRESS = "0xA71A021EF66B03E45E0d85590432DFCfa1b7174C";
+export const BERA_SAFE_ADDRESS = "0x0000000000000000000000000000000000000000";
 
 const accounts: HttpNetworkAccountsUserConfig | undefined = MNEMONIC
     ? { mnemonic: MNEMONIC }
@@ -85,6 +86,20 @@ const config: HardhatUserConfig = {
             safeConfig: {
                 safeUrl: 'https://app.safe.global',
                 safeAddress: ARB_SAFE_ADDRESS
+            }
+        },
+        bera: {
+            eid: EndpointId.BERA_MAINNET,
+            url: process.env.BERA_RPC_URL || '',
+            accounts,
+            verify: {
+                etherscan: {
+                    apiKey: process.env.BERA_ETHERSCAN_KEY || '',
+                }
+            },
+            safeConfig: {
+                safeUrl: '',
+                safeAddress: BERA_SAFE_ADDRESS
             }
         },
         hardhat: {
