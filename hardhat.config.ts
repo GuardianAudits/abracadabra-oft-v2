@@ -29,7 +29,7 @@ const PRIVATE_KEY = process.env.PRIVATE_KEY
 
 export const ETH_SAFE_ADDRESS = "0xDF2C270f610Dc35d8fFDA5B453E74db5471E126B";
 export const ARB_SAFE_ADDRESS = "0xA71A021EF66B03E45E0d85590432DFCfa1b7174C";
-export const BERA_SAFE_ADDRESS = "0x0000000000000000000000000000000000000000";
+export const BERA_SAFE_ADDRESS = "0xa4EF0376a91872B9c5d53D10410Bdf36e6Cf4e5E";
 
 const accounts: HttpNetworkAccountsUserConfig | undefined = MNEMONIC
     ? { mnemonic: MNEMONIC }
@@ -88,7 +88,7 @@ const config: HardhatUserConfig = {
                 safeAddress: ARB_SAFE_ADDRESS
             }
         },
-        bera: {
+        'bera-mainnet': {
             eid: EndpointId.BERA_MAINNET,
             url: process.env.BERA_RPC_URL || '',
             accounts,

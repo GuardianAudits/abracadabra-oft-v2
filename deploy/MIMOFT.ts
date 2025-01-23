@@ -12,12 +12,12 @@ const configurations = {
         initializeArgs: (signer: string) => [signer],
         feeHandler: '0xE66BE95FE4E3889a66925d996AF3E4dC173754a2'
     },
-    //'berachain': {
-    //    contractName: 'AbraOFTUpgradeable',
-    //    args: (endpointAddress: string) => [endpointAddress],
-    //    initializeArgs: (signer: string) => ['Magic Internet Money', 'MIM', signer],
-    //    //feeHandler: '0xe4aec83Cba57E2B0b9ED8bc9801123F44f393037'
-    //}
+    'bera-mainnet': {
+        contractName: 'AbraOFTUpgradeable',
+        args: (endpointAddress: string) => [endpointAddress],
+        initializeArgs: (signer: string) => ['Magic Internet Money', 'MIM', signer],
+        feeHandler: '0xe4aec83Cba57E2B0b9ED8bc9801123F44f393037'
+    }
 }
 
 const deploy: DeployFunction = async (hre) => {
