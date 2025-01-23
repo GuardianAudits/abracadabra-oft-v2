@@ -18,14 +18,13 @@ const spellArbitrumContract: OmniPointHardhat = {
 }
 
 const spellBeraContract: OmniPointHardhat = {
-    eid: EndpointId.BERA_MAINNET,
+    eid: EndpointId.BERA_V2_MAINNET,
     contractName: 'SpellOFT',
 }
 
 ///////////////////////////////////////////////////////
 /// BOUNDSPELL
 ///////////////////////////////////////////////////////
-
 const bSpellArbitrumContract: OmniPointHardhat = {
     eid: EndpointId.ARBITRUM_V2_MAINNET,
     contractName: 'BoundSpellOFT',
@@ -37,7 +36,7 @@ const bSpellEthereumContract: OmniPointHardhat = {
 }
 
 const bSpellBeraContract: OmniPointHardhat = {
-    eid: EndpointId.BERA_MAINNET,
+    eid: EndpointId.BERA_V2_MAINNET,
     contractName: 'BoundSpellOFT',
 }
 
@@ -50,7 +49,7 @@ const mimEthereumContract: OmniPointHardhat = {
 }
 
 const mimBeraContract: OmniPointHardhat = {
-    eid: EndpointId.BERA_MAINNET,
+    eid: EndpointId.BERA_V2_MAINNET,
     contractName: 'MIMOFT',
 }
 

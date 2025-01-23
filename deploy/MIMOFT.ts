@@ -1,9 +1,9 @@
-import { Contract } from 'ethers'
+import { Contract, ethers } from 'ethers'
 import { type DeployFunction } from 'hardhat-deploy/types'
 import { getDeploymentAddressAndAbi } from '@layerzerolabs/lz-evm-sdk-v2'
 
 const deploymentName = 'MIMOFT'
-const salt = "mim-oft-1734968493"
+const salt = "mim-oft-1734968494"
 
 const configurations = {
     'ethereum-mainnet': {
@@ -16,7 +16,7 @@ const configurations = {
         contractName: 'AbraOFTUpgradeable',
         args: (endpointAddress: string) => [endpointAddress],
         initializeArgs: (signer: string) => ['Magic Internet Money', 'MIM', signer],
-        feeHandler: '0xe4aec83Cba57E2B0b9ED8bc9801123F44f393037'
+        feeHandler: ethers.constants.AddressZero
     }
 }
 
@@ -50,8 +50,10 @@ const deploy: DeployFunction = async (hre) => {
         contract: config.contractName
     })
 
-    const oft = await hre.ethers.getContractAt('SenderWithFees', deployment.address)
-    await (await oft.setFeeHandler(config.feeHandler)).wait()
+    if (config.feeHandler !== ethers.constants.AddressZero) {
+        const oft = await hre.ethers.getContractAt('SenderWithFees', deployment.address)
+        await (await oft.setFeeHandler(config.feeHandler)).wait()
+    }
 }
 
 deploy.tags = [deploymentName]

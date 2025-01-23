@@ -89,16 +89,17 @@ const config: HardhatUserConfig = {
             }
         },
         'bera-mainnet': {
-            eid: EndpointId.BERA_MAINNET,
+            eid: EndpointId.BERA_V2_MAINNET,
             url: process.env.BERA_RPC_URL || '',
             accounts,
             verify: {
                 etherscan: {
+                    apiUrl: 'https://api.routescan.io/v2/network/mainnet/evm/80094/etherscan',
                     apiKey: process.env.BERA_ETHERSCAN_KEY || '',
                 }
             },
             safeConfig: {
-                safeUrl: '',
+                safeUrl: process.env.BERA_SAFE_URL || 'https://app.safe.global',
                 safeAddress: BERA_SAFE_ADDRESS
             }
         },

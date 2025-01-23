@@ -17,6 +17,12 @@ const configurations = {
         args: (endpointAddress: string) => [endpointAddress],
         initializeArgs: (signer: string) => ['boundSPELL', 'bSPELL', signer],
         feeHandler: '0xe4aec83Cba57E2B0b9ED8bc9801123F44f393037'
+    },
+    'bera-mainnet': {
+        contractName: 'AbraOFTUpgradeable',
+        args: (endpointAddress: string) => [endpointAddress],
+        initializeArgs: (signer: string) => ['boundSPELL', 'bSPELL', signer],
+        feeHandler: ethers.constants.AddressZero
     }
 }
 

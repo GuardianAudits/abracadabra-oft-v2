@@ -1,4 +1,4 @@
-import { Contract } from 'ethers'
+import { Contract, ethers } from 'ethers'
 import { type DeployFunction } from 'hardhat-deploy/types'
 import { getDeploymentAddressAndAbi } from '@layerzerolabs/lz-evm-sdk-v2'
 
@@ -17,6 +17,12 @@ const configurations = {
         args: (endpointAddress: string) => [endpointAddress],
         initializeArgs: (signer: string) => ['SPELL', 'SPELL', signer],
         feeHandler: '0xe4aec83Cba57E2B0b9ED8bc9801123F44f393037'
+    },
+    'bera-mainnet': {
+        contractName: 'AbraOFTUpgradeable',
+        args: (endpointAddress: string) => [endpointAddress],
+        initializeArgs: (signer: string) => ['SPELL', 'SPELL', signer],
+        feeHandler: ethers.constants.AddressZero
     }
 }
 
