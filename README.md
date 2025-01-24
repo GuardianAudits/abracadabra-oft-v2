@@ -38,10 +38,25 @@ bunx hardhat etherscan-verify --network <network-name>
 bunx hardhat lz:oapp:wire --oapp-config layerzero.config.ts
 ```
 
-# Change Ownership
+# Change OFT Ownership
 ```
 bunx hardhat lz:ownable:transfer-ownership --oapp-config layerzero.config.ts
 ```
+
+# Change Proxy Admin Ownership
+```
+cast --rpc-url <url> send <proxy admin address> "transferOwnership(address)" <new owner>
+```
+
+# Double check ownership
+```
+cast --rpc-url <url> call <layer zero endpoint> "delegates(address)(address)" <oft address>
+cast --rpc-url <url> call <oft proxy address> "owner()(address)"
+cast --rpc-url <url> call <proxy admin address> "owner()(address)"
+```
+
+# EndpointV2 addresses
+https://docs.layerzero.network/v2/developers/evm/technical-reference/deployed-contracts
 
 # Bridging example
 ```
