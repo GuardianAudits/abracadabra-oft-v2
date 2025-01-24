@@ -38,6 +38,10 @@ bunx hardhat etherscan-verify --network <network-name>
 bunx hardhat lz:oapp:wire --oapp-config layerzero.config.ts
 ```
 
+# Change Ownership
+```
+bunx hardhat lz:ownable:transfer-ownership --oapp-config layerzero.config.ts
+```
 
 # Bridging example
 ```

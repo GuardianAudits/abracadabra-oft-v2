@@ -70,7 +70,7 @@ const config: HardhatUserConfig = {
                 },
             },
             safeConfig: {
-                safeUrl: 'https://app.safe.global',
+                safeUrl: 'https://safe-transaction-mainnet.safe.global/',
                 safeAddress: ETH_SAFE_ADDRESS
             }
         },
@@ -84,7 +84,7 @@ const config: HardhatUserConfig = {
                 }
             },
             safeConfig: {
-                safeUrl: 'https://app.safe.global',
+                safeUrl: 'https://safe-transaction-arbitrum.safe.global',
                 safeAddress: ARB_SAFE_ADDRESS
             }
         },
@@ -99,9 +99,16 @@ const config: HardhatUserConfig = {
                 }
             },
             safeConfig: {
-                safeUrl: process.env.BERA_SAFE_URL || 'https://app.safe.global',
-                safeAddress: BERA_SAFE_ADDRESS
-            }
+                safeUrl: 'https://transaction.bp.w3us.site',
+                safeAddress: BERA_SAFE_ADDRESS,
+                contractNetworks: {
+                    // @ts-ignore
+                    '80094': {
+                        multiSendAddress: '0x38869bf66a61cF6bDB996A6aE40D5853Fd43B526',
+                        multiSendCallOnlyAddress: '0x9641d764fc13c8B624c04430C7356C1C7C8102e2',
+                    },
+                },
+            },
         },
         hardhat: {
             // Need this for testing because TestHelperOz5.sol is exceeding the compiled contract size limit

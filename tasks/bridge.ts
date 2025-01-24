@@ -51,6 +51,23 @@ const TOKEN_CONFIGS = {
         deploymentName: 'BoundSpellOFT',
       }
     }
+  },
+  MIM: {
+    symbol: 'MIM',
+    decimals: 18,
+    networks: {
+      'ethereum-mainnet': {
+        type: 'adapter',
+        contractName: 'AbraOFTAdapterUpgradeable',
+        underlying: '0x99D8a9C45b2ecA8864373A26D1459e3Dff1e17F3',
+        deploymentName: 'MIMOFT',
+      },
+      'bera-mainnet': {
+        type: 'oft',
+        contractName: 'AbraOFTUpgradeable',
+        deploymentName: 'MIMOFT',
+      }
+    }
   }
 };
 

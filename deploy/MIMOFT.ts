@@ -10,7 +10,7 @@ const configurations = {
         contractName: 'AbraOFTAdapterUpgradeable',
         args: (endpointAddress: string) => ['0x99D8a9C45b2ecA8864373A26D1459e3Dff1e17F3', endpointAddress], // MIM address
         initializeArgs: (signer: string) => [signer],
-        feeHandler: '0xE66BE95FE4E3889a66925d996AF3E4dC173754a2'
+        feeHandler: '0xe4aec83Cba57E2B0b9ED8bc9801123F44f393037'
     },
     'bera-mainnet': {
         contractName: 'AbraOFTUpgradeable',

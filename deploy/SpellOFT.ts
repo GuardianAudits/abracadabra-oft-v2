@@ -10,7 +10,7 @@ const configurations = {
         contractName: 'AbraOFTAdapterUpgradeable',
         args: (endpointAddress: string) => ['0x090185f2135308BaD17527004364eBcC2D37e5F6', endpointAddress], // SPELL address
         initializeArgs: (signer: string) => [signer],
-        feeHandler: '0xE66BE95FE4E3889a66925d996AF3E4dC173754a2'
+        feeHandler: '0xe4aec83Cba57E2B0b9ED8bc9801123F44f393037'
     },
     'arbitrum-mainnet': {
         contractName: 'AbraOFTUpgradeable',
