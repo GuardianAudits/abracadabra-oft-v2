@@ -7,6 +7,7 @@
 
 
 # SPELL
+
 | Chain | OFT Contract | Proxy Admin | Native Token (adapters only) |
 |-------| ------| -------------|-------------|
 | Ethereum | 0x48c95D958fd0Ef6ecF7fEb8d592c4D5a70f1AfBE | 0x039Ce200b3fba30423bE2c6594F3f22a20E62782 | 0x090185f2135308BaD17527004364eBcC2D37e5F6 |
@@ -14,6 +15,7 @@
 | Berachain | 0x22581e7E93d66977849D094006fC2cF3aB9C8FfA | 0x039Ce200b3fba30423bE2c6594F3f22a20E62782 | - |
 
 # BOUNDSPELL
+
 | Chain | OFT Contract | Proxy Admin | Native Token (adapters only) |
 |-------| ------| -------------|-------------|
 | Ethereum | 0x3577D33FE93BEFDfAB0Fce855784549D6b7eAe43 | 0x54055e77e850055a8ec85de3ea649d915660b8d7 | - |
