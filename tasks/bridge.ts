@@ -32,6 +32,11 @@ const TOKEN_CONFIGS = {
         type: 'oft',
         contractName: 'AbraOFTUpgradeable',
         deploymentName: 'SpellOFT',
+      },
+      'bera-mainnet': {
+        type: 'oft',
+        contractName: 'AbraOFTUpgradeable',
+        deploymentName: 'SpellOFT',
       }
     }
   },
@@ -46,6 +51,11 @@ const TOKEN_CONFIGS = {
         deploymentName: 'BoundSpellOFT',
       },
       'ethereum-mainnet': {
+        type: 'oft',
+        contractName: 'AbraOFTUpgradeable',
+        deploymentName: 'BoundSpellOFT',
+      },
+      'bera-mainnet': {
         type: 'oft',
         contractName: 'AbraOFTUpgradeable',
         deploymentName: 'BoundSpellOFT',
