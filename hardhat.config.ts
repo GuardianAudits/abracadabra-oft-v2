@@ -27,6 +27,10 @@ const MNEMONIC = process.env.MNEMONIC
 // If you prefer to be authenticated using a private key, set a PRIVATE_KEY environment variable
 const PRIVATE_KEY = process.env.PRIVATE_KEY
 
+export const ETH_SAFE_ADDRESS = "0xDF2C270f610Dc35d8fFDA5B453E74db5471E126B";
+export const ARB_SAFE_ADDRESS = "0xA71A021EF66B03E45E0d85590432DFCfa1b7174C";
+export const BERA_SAFE_ADDRESS = "0xa4EF0376a91872B9c5d53D10410Bdf36e6Cf4e5E";
+
 const accounts: HttpNetworkAccountsUserConfig | undefined = MNEMONIC
     ? { mnemonic: MNEMONIC }
     : PRIVATE_KEY
@@ -65,6 +69,10 @@ const config: HardhatUserConfig = {
                     apiKey: process.env.MAINNET_ETHERSCAN_KEY || '',
                 },
             },
+            safeConfig: {
+                safeUrl: 'https://safe-transaction-mainnet.safe.global/',
+                safeAddress: ETH_SAFE_ADDRESS
+            }
         },
         'arbitrum-mainnet': {
             eid: EndpointId.ARBITRUM_V2_MAINNET,
@@ -74,6 +82,32 @@ const config: HardhatUserConfig = {
                 etherscan: {
                     apiKey: process.env.ARBITRUM_ETHERSCAN_KEY || '',
                 }
+            },
+            safeConfig: {
+                safeUrl: 'https://safe-transaction-arbitrum.safe.global',
+                safeAddress: ARB_SAFE_ADDRESS
+            }
+        },
+        'bera-mainnet': {
+            eid: EndpointId.BERA_V2_MAINNET,
+            url: process.env.BERA_RPC_URL || '',
+            accounts,
+            verify: {
+                etherscan: {
+                    apiUrl: 'https://api.routescan.io/v2/network/mainnet/evm/80094/etherscan',
+                    apiKey: process.env.BERA_ETHERSCAN_KEY || '',
+                }
+            },
+            safeConfig: {
+                safeUrl: 'https://transaction.bp.w3us.site',
+                safeAddress: BERA_SAFE_ADDRESS,
+                contractNetworks: {
+                    // @ts-ignore
+                    '80094': {
+                        multiSendAddress: '0x38869bf66a61cF6bDB996A6aE40D5853Fd43B526',
+                        multiSendCallOnlyAddress: '0x9641d764fc13c8B624c04430C7356C1C7C8102e2',
+                    },
+                },
             },
         },
         hardhat: {

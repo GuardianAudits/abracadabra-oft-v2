@@ -32,6 +32,11 @@ const TOKEN_CONFIGS = {
         type: 'oft',
         contractName: 'AbraOFTUpgradeable',
         deploymentName: 'SpellOFT',
+      },
+      'bera-mainnet': {
+        type: 'oft',
+        contractName: 'AbraOFTUpgradeable',
+        deploymentName: 'SpellOFT',
       }
     }
   },
@@ -49,6 +54,28 @@ const TOKEN_CONFIGS = {
         type: 'oft',
         contractName: 'AbraOFTUpgradeable',
         deploymentName: 'BoundSpellOFT',
+      },
+      'bera-mainnet': {
+        type: 'oft',
+        contractName: 'AbraOFTUpgradeable',
+        deploymentName: 'BoundSpellOFT',
+      }
+    }
+  },
+  MIM: {
+    symbol: 'MIM',
+    decimals: 18,
+    networks: {
+      'ethereum-mainnet': {
+        type: 'adapter',
+        contractName: 'AbraOFTAdapterUpgradeable',
+        underlying: '0x99D8a9C45b2ecA8864373A26D1459e3Dff1e17F3',
+        deploymentName: 'MIMOFT',
+      },
+      'bera-mainnet': {
+        type: 'oft',
+        contractName: 'AbraOFTUpgradeable',
+        deploymentName: 'MIMOFT',
       }
     }
   }

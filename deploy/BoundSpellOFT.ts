@@ -17,6 +17,12 @@ const configurations = {
         args: (endpointAddress: string) => [endpointAddress],
         initializeArgs: (signer: string) => ['boundSPELL', 'bSPELL', signer],
         feeHandler: '0xe4aec83Cba57E2B0b9ED8bc9801123F44f393037'
+    },
+    'bera-mainnet': {
+        contractName: 'AbraOFTUpgradeable',
+        args: (endpointAddress: string) => [endpointAddress],
+        initializeArgs: (signer: string) => ['boundSPELL', 'bSPELL', signer],
+        feeHandler: ethers.constants.AddressZero
     }
 }
 
@@ -45,13 +51,15 @@ const deploy: DeployFunction = async (hre) => {
                     methodName: 'initialize',
                     args: config.initializeArgs(signer.address),
                 },
-            },
+            }
         },
         contract: config.contractName
     })
 
-    const oft = await hre.ethers.getContractAt('SenderWithFees', deployment.address)
-    await (await oft.setFeeHandler(config.feeHandler)).wait()
+    if (config.feeHandler !== ethers.constants.AddressZero) {
+        const oft = await hre.ethers.getContractAt('SenderWithFees', deployment.address)
+        await (await oft.setFeeHandler(config.feeHandler)).wait()
+    }
 }
 
 deploy.tags = [deploymentName]

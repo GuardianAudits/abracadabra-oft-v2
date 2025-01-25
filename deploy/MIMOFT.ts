@@ -2,26 +2,20 @@ import { Contract, ethers } from 'ethers'
 import { type DeployFunction } from 'hardhat-deploy/types'
 import { getDeploymentAddressAndAbi } from '@layerzerolabs/lz-evm-sdk-v2'
 
-const deploymentName = 'SpellOFT'
-const salt = "spell-oft-1734060795"
+const deploymentName = 'MIMOFT'
+const salt = "mim-oft-1734968494"
 
 const configurations = {
     'ethereum-mainnet': {
         contractName: 'AbraOFTAdapterUpgradeable',
-        args: (endpointAddress: string) => ['0x090185f2135308BaD17527004364eBcC2D37e5F6', endpointAddress], // SPELL address
+        args: (endpointAddress: string) => ['0x99D8a9C45b2ecA8864373A26D1459e3Dff1e17F3', endpointAddress], // MIM address
         initializeArgs: (signer: string) => [signer],
         feeHandler: '0xe4aec83Cba57E2B0b9ED8bc9801123F44f393037'
-    },
-    'arbitrum-mainnet': {
-        contractName: 'AbraOFTUpgradeable',
-        args: (endpointAddress: string) => [endpointAddress],
-        initializeArgs: (signer: string) => ['SPELL', 'SPELL', signer],
-        feeHandler: '0xE66BE95FE4E3889a66925d996AF3E4dC173754a2'
     },
     'bera-mainnet': {
         contractName: 'AbraOFTUpgradeable',
         args: (endpointAddress: string) => [endpointAddress],
-        initializeArgs: (signer: string) => ['SPELL', 'SPELL', signer],
+        initializeArgs: (signer: string) => ['Magic Internet Money', 'MIM', signer],
         feeHandler: ethers.constants.AddressZero
     }
 }
