@@ -261,55 +261,6 @@ contract AbraForkTests is Test {
         vm.stopPrank();
     }
 
-//    function test_oft_send_fuzz(address receiver, uint256 amount) public {
-//        vm.assume(receiver != address(0));
-//        vm.assume(receiver != address(usdt0));
-//        amount = amount % (1_000_000_000 * 1e6);
-//
-//        if (block.chainid == ETH_CHAIN_ID && amount > 0) {
-//            // Ensure USDT on ETH has sufficient balance in the OFT for the test transfer reception
-//            vm.startPrank(USDT_MINTER);
-//            TetherMintable(address(usdt0)).issue(amount);
-//            USDTLegacyTransferrable(address(usdt0)).transfer(address(usdt0Oft), amount);
-//            vm.stopPrank();
-//        }
-//
-//        uint256 receiverBalBefore = usdt0.balanceOf(receiver);
-//
-//        vm.startPrank(address(endpoint));
-//        (bytes memory message, ) = OFTMsgCodec.encode(OFTComposeMsgCodec.addressToBytes32(address(receiver)), uint64(amount), "");
-//        IOAppReceiver(address(usdt0Oft)).lzReceive(Origin(sendingSrcEid, OFTComposeMsgCodec.addressToBytes32(mimOftPeerEth), 0), 0, message, address(this), "");
-//
-//        assertEq(usdt0.balanceOf(receiver) - receiverBalBefore, amount); // receiver received the tokens
-//
-//        vm.stopPrank();
-//    }
-
-//    function test_usdt0_send_to_zero_address() public {
-//        uint256 balZeroAddressBefore = usdt0.balanceOf(address(0));
-//        uint256 balDeadAddressBefore = usdt0.balanceOf(address(0xdead));
-//
-//        (bytes memory message, ) = OFTMsgCodec.encode(OFTComposeMsgCodec.addressToBytes32(address(0)), uint64(10_000), "");
-//
-//        vm.prank(address(endpoint));
-//        IOAppReceiver(address(usdt0Oft)).lzReceive(Origin(sendingSrcEid, OFTComposeMsgCodec.addressToBytes32(mimOftPeerEth), 0), 0, message, address(this), "");
-//
-//        if (block.chainid == ETH_CHAIN_ID) {
-//            assertEq(usdt0.balanceOf(address(0)) - balZeroAddressBefore, 10_000); // 0 Address received the tokens since zero transfer is allowed on ETH
-//            assertEq(usdt0.balanceOf(address(0xdead)) - balDeadAddressBefore, 0); // dead address received no tokens
-//        } else {
-//            assertEq(usdt0.balanceOf(address(0)) - balZeroAddressBefore, 0); // 0 Address did not receive tokens
-//            assertEq(usdt0.balanceOf(address(0xdead)) - balDeadAddressBefore, 10_000); // dead address received the tokens
-//        }
-//    }
-
-//    function test_decimals_from_underlying_are_used() public {
-//        assertEq(usdt0.decimals(), 6); // USDT0 has 6 decimals on Ink
-//
-//        // conversion rate is 1 because shared decimals is the same as the local decimals
-//        assertEq(usdt0Oft.decimalConversionRate(), 1);
-//    }
-
     function test_cannot_be_re_initialized() public {
         vm.expectRevert(Initializable.InvalidInitialization.selector);
         mimOft.initialize("", "", address(0));
@@ -418,34 +369,6 @@ contract AbraForkTests is Test {
         assertEq(receipt.amountSentLD, 10 * 10 ** localDecimals);
         assertEq(receipt.amountReceivedLD, 10 * 10 ** localDecimals);
     }
-
-
-//    function test_quote_send() public {
-//        SendParam memory sendParam = SendParam({
-//            dstEid: sendingDstEid,
-//            to: bytes32(uint256(uint160(alice))),
-//            amountLD: 10_000,
-//            minAmountLD: 10_000,
-//            extraOptions: "",
-//            composeMsg: "",
-//            oftCmd: ""
-//        });
-//
-//        MessagingFee memory msgFee = mimOft.quoteSend(sendParam, false);
-//
-//        if (block.chainid == ETH_CHAIN_ID) {
-//            assertEq(msgFee.nativeFee, 30211452289542); // ~0.00003 ETH
-//            assertEq(msgFee.lzTokenFee, 0);
-//        } else if (block.chainid == INK_CHAIN_ID) {
-//            assertEq(msgFee.nativeFee, 5429013693965252); // 0.0054290 ETH
-//            assertEq(msgFee.lzTokenFee, 0);
-//        } else if (block.chainid == BERA_CHAIN_ID) {
-//            assertEq(msgFee.nativeFee, 14357032736678937646);  // 14.35 BERA
-//            assertEq(msgFee.lzTokenFee, 0);
-//        } else {
-//            revert("unsupported chain!");
-//        }
-//    }
 
     function test_oft_peer() public {
 
