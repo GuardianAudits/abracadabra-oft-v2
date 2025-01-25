@@ -56,8 +56,10 @@ const deploy: DeployFunction = async (hre) => {
         contract: config.contractName
     })
 
-    const oft = await hre.ethers.getContractAt('SenderWithFees', deployment.address)
-    await (await oft.setFeeHandler(config.feeHandler)).wait()
+    if (config.feeHandler !== ethers.constants.AddressZero) {
+        const oft = await hre.ethers.getContractAt('SenderWithFees', deployment.address)
+        await (await oft.setFeeHandler(config.feeHandler)).wait()
+    }
 }
 
 deploy.tags = [deploymentName]
