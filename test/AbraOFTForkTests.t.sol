@@ -77,8 +77,8 @@ interface IOFTComplete is IOFT {
     function decimals() external returns (uint8);
 }
 
-// To run tests on ARB: forge test --fork-url https://arb-mainnet.g.alchemy.com/v2/Y41Zvm9c8RIq6Ld4ohvI0yFL_Zl9xvf5 --fork-block-number 298976368  --mc AbraForkTests
-// To run tests on ETH: forge test --fork-url https://eth-mainnet.g.alchemy.com/v2/Y41Zvm9c8RIq6Ld4ohvI0yFL_Zl9xvf5 --fork-block-number 21698295  --mc AbraForkTests
+// To run tests on ARB: forge test --fork-url <ARB> --fork-block-number 298976368  --mc AbraForkTests
+// To run tests on ETH: forge test --fork-url <ETH> --fork-block-number 21698295  --mc AbraForkTests
 // To run tests on Bera: forge test --fork-url https://cdn.routescan.io/api/evm/80094/rpc --fork-block-number 197173  --mc AbraForkTests
 
 contract AbraForkTests is Test {
