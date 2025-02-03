@@ -35,7 +35,7 @@ bunx hardhat etherscan-verify --network <network-name>
 
 # LayerZero Wiring
 ```
-bunx hardhat lz:oapp:wire --oapp-config layerzero.config.ts
+bunx hardhat lz:oapp:wire --oapp-config layerzero.config.ts [--safe (when owner is a safe)]
 ```
 
 # Change OFT Ownership
