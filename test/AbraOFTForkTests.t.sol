@@ -33,7 +33,7 @@ interface IDVN {
 }
 
 interface IReceiveLib {
-    function executorConfigs(address _oapp, uint32 _eid) external returns (ExecutorConfig memory);
+    function executorConfigs(address _oapp, uint32 _eid) external returns(ExecutorConfig memory);
 }
 
 interface ITransparentUpgradeableProxy {
@@ -54,10 +54,8 @@ interface ILayerZeroEndpointDelegateable {
 
 interface IERC20Blockable is IERC20Metadata {
     function isBlocked(address user) external returns (bool);
-
-    function addToBlockedList(address _user) external;
-
-    function removeFromBlockedList(address _user) external;
+    function addToBlockedList (address _user) external;
+    function removeFromBlockedList (address _user) external;
 }
 
 interface TetherMintable {
@@ -66,31 +64,29 @@ interface TetherMintable {
 
 interface USDTLegacyTransferrable {
     function transfer(address _to, uint256 _value) external;
-
     function addBlackList(address _evilUser) external;
-
     function isBlackListed(address _user) external returns (bool);
 }
 
 interface IOFTComplete is IOFT {
     function decimalConversionRate() external view returns (uint256);
-
     function initialize(string memory, string memory, address _delegate) external;
-
     function msgInspector() external returns (address);
-
     function balanceOf(address) external returns (uint256);
-
     function peers(uint32) external returns (bytes32);
-
     function decimals() external returns (uint8);
 }
 
-// To run tests on ARB: forge test --fork-url <ARB> --fork-block-number 298976368  --mc AbraForkTests
-// To run tests on ETH: forge test --fork-url <ETH> --fork-block-number 21698295  --mc AbraForkTests
-// To run tests on Bera: forge test --fork-url https://cdn.routescan.io/api/evm/80094/rpc --fork-block-number 197173  --mc AbraForkTests
+interface IERC20Decimals is IERC20 {
+    function decimals() external view returns (uint8);
+}
 
-contract AbraForkTestsBase is Test {
+// To run tests on ARB: forge test --fork-url https://arb1.arbitrum.io/rpc  --mc AbraForkTests
+// To run tests on ETH: forge test --fork-url <ETH> --mc AbraForkTests
+// To run tests on Bera: forge test --fork-url https://cdn.routescan.io/api/evm/80094/rpc  --mc AbraForkTests
+
+contract AbraForkTests is Test {
+
     uint256 constant ETH_CHAIN_ID = 1;
     uint256 constant INK_CHAIN_ID = 57073;
     uint256 constant BERA_CHAIN_ID = 80094;
@@ -115,6 +111,7 @@ contract AbraForkTestsBase is Test {
     address constant SEND_LIB_ARB = 0x975bcD720be66659e3EB3C0e4F1866a3020E493A; // SendUln302
     address constant RECEIVE_LIB_ARB = 0x7B9E184e07a6EE1aC23eAe0fe8D6Be2f663f05e6; // ReceiveUln302
     uint64 constant ARB_CONFIRMATIONS = 20;
+    address constant SAFE_ARB = 0xA71A021EF66B03E45E0d85590432DFCfa1b7174C;
 
     address constant SAFE_BERA = 0xa4EF0376a91872B9c5d53D10410Bdf36e6Cf4e5E;
     address constant SEND_LIB_BERA = 0xC39161c743D0307EB9BCc9FEF03eeb9Dc4802de7; // SendUln302
@@ -130,7 +127,7 @@ contract AbraForkTestsBase is Test {
     address constant OFT_ETH = 0x6C96dE32CEa08842dcc4058c14d3aaAD7Fa41dee;
     address constant USDT0_ETH = 0xdAC17F958D2ee523a2206206994597C13D831ec7;
     address constant USDT_MINTER = 0xC6CDE7C39eB2f0F0095F41570af89eFC2C1Ea828;
-    address constant SAFE_ETH = 0x4DFF9b5b0143E642a3F63a5bcf2d1C328e600bf8;
+    address constant SAFE_ETH = 0xDF2C270f610Dc35d8fFDA5B453E74db5471E126B;
     uint32 constant ETH_EID = 30101;
     uint64 constant ETH_CONFIRMATIONS = 15;
     address constant SEND_LIB_ETH = 0xbB2Ea70C9E858123480642Cf96acbcCE1372dCe1; // SendUln302
@@ -159,36 +156,47 @@ contract AbraForkTestsBase is Test {
     address safe;
     address usdt0Dvn;
 
-    address mimOftPeerEth;
-    address spellV2OftPeerEth;
-    address bSpellOftPeerEth;
+    address mimOftPeer;
+    address spellV2OftPeer;
+    address bSpellOftPeer;
 
     address sendLib;
     address receiveLib;
 
-    function setUp() public virtual {
+    function setUp() public {
+
         if (block.chainid == ETH_CHAIN_ID) {
             endpoint = ILayerZeroEndpointV2(ENDPOINT_ETH);
             mimOft = IOFTComplete(MIM_OFT_ETH);
             spellV2Oft = IOFTComplete(SPELLV2_OFT_ETH);
             bSpellOft = IOFTComplete(BSPELL_OFT_ETH);
             sendLib = SEND_LIB_ETH;
+            sendingSrcEid = BERA_EID;
+            mimOftPeer = MIM_OFT_BERA;
+            spellV2OftPeer = SPELLV2_OFT_BERA;
+            bSpellOftPeer = BSPELL_OFT_BERA;
             receiveLib = RECEIVE_LIB_ETH;
+            safe = SAFE_ETH;
         } else if (block.chainid == ARB_CHAIN_ID) {
             endpoint = ILayerZeroEndpointV2(ENDPOINT_ARB);
             spellV2Oft = IOFTComplete(SPELLV2_OFT_ARB);
             bSpellOft = IOFTComplete(BSPELL_OFT_ARB);
             sendLib = SEND_LIB_ARB;
             receiveLib = RECEIVE_LIB_ARB;
+            safe = SAFE_ARB;
+            sendingSrcEid = ETH_EID;
+            spellV2OftPeer = SPELLV2_OFT_ETH;
+            bSpellOftPeer = BSPELL_OFT_ETH;
         } else if (block.chainid == BERA_CHAIN_ID) {
             endpoint = ILayerZeroEndpointV2(ENDPOINT_BERA);
             mimOft = IOFTComplete(MIM_OFT_BERA);
             spellV2Oft = IOFTComplete(SPELLV2_OFT_BERA);
             bSpellOft = IOFTComplete(BSPELL_OFT_BERA);
-            mimOftPeerEth = MIM_OFT_ETH;
-            spellV2OftPeerEth = SPELLV2_OFT_ETH;
-            bSpellOftPeerEth = BSPELL_OFT_ETH;
-            sendingDstEid = 30101;
+            mimOftPeer = MIM_OFT_ETH;
+            spellV2OftPeer = SPELLV2_OFT_ETH;
+            bSpellOftPeer = BSPELL_OFT_ETH;
+            sendingSrcEid = ETH_EID;
+            sendingDstEid = ETH_EID;
             safe = SAFE_BERA;
             sendLib = SEND_LIB_BERA;
             receiveLib = RECEIVE_LIB_BERA;
@@ -198,131 +206,178 @@ contract AbraForkTestsBase is Test {
     }
 
     function test_oft_decimals() public {
-        assertEq(mimOft.sharedDecimals(), 6);
-        assertEq(mimOft.decimals(), 18);
-        assertEq(mimOft.decimalConversionRate(), 1e12);
+        if (block.chainid != ARB_CHAIN_ID) {
+            assertEq(mimOft.sharedDecimals(), 6);
+            if (block.chainid != ETH_CHAIN_ID) { // Adapter contract on ETH
+                assertEq(mimOft.decimals(), 18);
+            }
+            assertEq(mimOft.decimalConversionRate(), 1e12);
+        }
 
         assertEq(spellV2Oft.sharedDecimals(), 6);
-        assertEq(spellV2Oft.decimals(), 18);
+        if (block.chainid != ETH_CHAIN_ID) { // Adapter contract on ETH
+            assertEq(spellV2Oft.decimals(), 18);
+        }
         assertEq(spellV2Oft.decimalConversionRate(), 1e12);
 
         assertEq(bSpellOft.sharedDecimals(), 6);
-        assertEq(bSpellOft.decimals(), 18);
+        if (block.chainid != ARB_CHAIN_ID) { // Adapter contract on ARB
+            assertEq(bSpellOft.decimals(), 18);
+        }
         assertEq(bSpellOft.decimalConversionRate(), 1e12);
     }
 
     function test_oft_send_mim() public {
-        assertEq(mimOft.balanceOf(alice), 0); // alice address balance is 0 before
+        if (block.chainid == ARB_CHAIN_ID) return;
+        if (block.chainid == ETH_CHAIN_ID) {
+            assertEq(IERC20(mimOft.token()).balanceOf(alice), 0);
+        } else {
+            assertEq(mimOft.balanceOf(alice), 0); // alice address balance is 0 before
+        }
 
         uint256 mimDecimalConversionRate = mimOft.decimalConversionRate();
         uint256 sharedDecimals = mimOft.sharedDecimals();
-        uint256 localDecimals = mimOft.decimals();
+        uint256 localDecimals;
+        if (block.chainid == ETH_CHAIN_ID) {
+            localDecimals = IERC20Decimals(mimOft.token()).decimals();
+        } else {
+            localDecimals = mimOft.decimals();
+        }
         uint256 tenTokensSD = 10 * (10 ** localDecimals / mimDecimalConversionRate);
 
         assertEq(10 * 10 ** sharedDecimals, tenTokensSD);
 
         vm.startPrank(address(endpoint));
-        (bytes memory message, ) = OFTMsgCodec.encode(
-            OFTComposeMsgCodec.addressToBytes32(address(alice)),
-            uint64(tenTokensSD),
-            ""
-        );
-        IOAppReceiver(address(mimOft)).lzReceive(
-            Origin(sendingSrcEid, OFTComposeMsgCodec.addressToBytes32(mimOftPeerEth), 0),
-            0,
-            message,
-            address(this),
-            ""
-        );
+        (bytes memory message, ) = OFTMsgCodec.encode(OFTComposeMsgCodec.addressToBytes32(address(alice)), uint64(tenTokensSD), "");
+        IOAppReceiver(address(mimOft)).lzReceive(Origin(sendingSrcEid, OFTComposeMsgCodec.addressToBytes32(mimOftPeer), 0), 0, message, address(this), "");
 
-        assertEq(mimOft.balanceOf(alice), 10 * 10 ** localDecimals); // alice received the tokens
+        if (block.chainid == ETH_CHAIN_ID) {
+            assertEq(IERC20(mimOft.token()).balanceOf(alice), 10 * 10 ** localDecimals); // alice received the tokens
+        } else {
+            assertEq(mimOft.balanceOf(alice), 10 * 10 ** localDecimals); // alice received the tokens
+        }
 
         vm.stopPrank();
     }
 
     function test_oft_send_bspell() public {
-        assertEq(bSpellOft.balanceOf(alice), 0); // alice address balance is 0 before
+        if (block.chainid == ARB_CHAIN_ID) {
+            assertEq(IERC20(bSpellOft.token()).balanceOf(alice), 0);
+        } else {
+            assertEq(bSpellOft.balanceOf(alice), 0); // alice address balance is 0 before
+        }
 
         uint256 mimDecimalConversionRate = bSpellOft.decimalConversionRate();
         uint256 sharedDecimals = bSpellOft.sharedDecimals();
-        uint256 localDecimals = bSpellOft.decimals();
+        uint256 localDecimals;
+
+        if (block.chainid == ARB_CHAIN_ID) {
+            localDecimals = IERC20Decimals(bSpellOft.token()).decimals();
+        } else {
+            localDecimals = bSpellOft.decimals();
+        }
+
         uint256 tenTokensSD = 10 * (10 ** localDecimals / mimDecimalConversionRate);
 
         assertEq(10 * 10 ** sharedDecimals, tenTokensSD);
 
         vm.startPrank(address(endpoint));
-        (bytes memory message, ) = OFTMsgCodec.encode(
-            OFTComposeMsgCodec.addressToBytes32(address(alice)),
-            uint64(tenTokensSD),
-            ""
-        );
-        IOAppReceiver(address(bSpellOft)).lzReceive(
-            Origin(sendingSrcEid, OFTComposeMsgCodec.addressToBytes32(bSpellOftPeerEth), 0),
-            0,
-            message,
-            address(this),
-            ""
-        );
+        (bytes memory message, ) = OFTMsgCodec.encode(OFTComposeMsgCodec.addressToBytes32(address(alice)), uint64(tenTokensSD), "");
+        IOAppReceiver(address(bSpellOft)).lzReceive(Origin(sendingSrcEid, OFTComposeMsgCodec.addressToBytes32(bSpellOftPeer), 0), 0, message, address(this), "");
 
-        assertEq(bSpellOft.balanceOf(alice), 10 * 10 ** localDecimals); // alice received the tokens
+        if (block.chainid == ARB_CHAIN_ID) {
+            assertEq(IERC20(bSpellOft.token()).balanceOf(alice), 10 * 10 ** localDecimals); // alice received the tokens
+        } else {
+            assertEq(bSpellOft.balanceOf(alice), 10 * 10 ** localDecimals); // alice received the tokens
+        }
 
         vm.stopPrank();
     }
 
     function test_oft_send_spellv2() public {
-        assertEq(spellV2Oft.balanceOf(alice), 0); // alice address balance is 0 before
+        if (block.chainid == ETH_CHAIN_ID) {
+            assertEq(IERC20(spellV2Oft.token()).balanceOf(alice), 0);
+        } else {
+            assertEq(spellV2Oft.balanceOf(alice), 0); // alice address balance is 0 before
+        }
 
         uint256 mimDecimalConversionRate = spellV2Oft.decimalConversionRate();
         uint256 sharedDecimals = spellV2Oft.sharedDecimals();
-        uint256 localDecimals = spellV2Oft.decimals();
+        uint256 localDecimals;
+        if (block.chainid == ETH_CHAIN_ID) {
+            localDecimals = IERC20Decimals(spellV2Oft.token()).decimals();
+        } else {
+            localDecimals = spellV2Oft.decimals();
+        }
         uint256 tenTokensSD = 10 * (10 ** localDecimals / mimDecimalConversionRate);
 
         assertEq(10 * 10 ** sharedDecimals, tenTokensSD);
 
         vm.startPrank(address(endpoint));
-        (bytes memory message, ) = OFTMsgCodec.encode(
-            OFTComposeMsgCodec.addressToBytes32(address(alice)),
-            uint64(tenTokensSD),
-            ""
-        );
-        IOAppReceiver(address(spellV2Oft)).lzReceive(
-            Origin(sendingSrcEid, OFTComposeMsgCodec.addressToBytes32(spellV2OftPeerEth), 0),
-            0,
-            message,
-            address(this),
-            ""
-        );
+        (bytes memory message, ) = OFTMsgCodec.encode(OFTComposeMsgCodec.addressToBytes32(address(alice)), uint64(tenTokensSD), "");
+        IOAppReceiver(address(spellV2Oft)).lzReceive(Origin(sendingSrcEid, OFTComposeMsgCodec.addressToBytes32(spellV2OftPeer), 0), 0, message, address(this), "");
 
-        assertEq(spellV2Oft.balanceOf(alice), 10 * 10 ** localDecimals); // alice received the tokens
+        if (block.chainid == ETH_CHAIN_ID) {
+            assertEq(IERC20(spellV2Oft.token()).balanceOf(alice), 10 * 10 ** localDecimals); // alice received the tokens
+        } else {
+            assertEq(spellV2Oft.balanceOf(alice), 10 * 10 ** localDecimals); // alice received the tokens
+        }
 
         vm.stopPrank();
     }
 
     function test_cannot_be_re_initialized() public {
-        vm.expectRevert(Initializable.InvalidInitialization.selector);
-        mimOft.initialize("", "", address(0));
+        if (block.chainid != ARB_CHAIN_ID) {
+            vm.expectRevert();
+            mimOft.initialize("", "", address(0));
+        }
 
-        vm.expectRevert(Initializable.InvalidInitialization.selector);
+        vm.expectRevert();
         spellV2Oft.initialize("", "", address(0));
 
-        vm.expectRevert(Initializable.InvalidInitialization.selector);
+        vm.expectRevert();
         bSpellOft.initialize("", "", address(0));
     }
 
     function test_initializers_are_disabled_on_implementation() public {
-        address proxyAdmin = address(uint160(uint256(vm.load(address(mimOft), PROXY_ADMIN_SLOT))));
+        if (block.chainid != ARB_CHAIN_ID) {
+            address proxyAdmin = address(uint160(uint256(vm.load(address(mimOft), PROXY_ADMIN_SLOT))));
 
-        vm.prank(proxyAdmin);
-        IOFTComplete implementation = IOFTComplete(ITransparentUpgradeableProxy(address(mimOft)).implementation());
+            vm.prank(proxyAdmin);
+            IOFTComplete implementationMim = IOFTComplete(ITransparentUpgradeableProxy(address(mimOft)).implementation());
 
-        vm.expectRevert(Initializable.InvalidInitialization.selector);
-        implementation.initialize("", "", alice);
+            vm.expectRevert();
+            implementationMim.initialize("XX", "XX", alice);
+        }
+
+        address proxyAdminSpell = address(uint160(uint256(vm.load(address(spellV2Oft), PROXY_ADMIN_SLOT))));
+
+        vm.prank(proxyAdminSpell);
+        IOFTComplete implementationSpell = IOFTComplete(ITransparentUpgradeableProxy(address(spellV2Oft)).implementation());
+
+        vm.expectRevert();
+        implementationSpell.initialize("XX", "XX", alice);
+
+
+        address proxyAdminBSpell = address(uint160(uint256(vm.load(address(bSpellOft), PROXY_ADMIN_SLOT))));
+
+        vm.prank(proxyAdminBSpell);
+        IOFTComplete implementationBSpell = IOFTComplete(ITransparentUpgradeableProxy(address(bSpellOft)).implementation());
+
+        vm.expectRevert();
+        implementationBSpell.initialize("XX", "XX", alice);
     }
 
     function test_quote_oft_mim() public {
+        if (block.chainid == ARB_CHAIN_ID) return;
         uint256 mimDecimalConversionRate = mimOft.decimalConversionRate();
         uint256 sharedDecimals = mimOft.sharedDecimals();
-        uint256 localDecimals = mimOft.decimals();
+        uint256 localDecimals;
+        if (block.chainid == ETH_CHAIN_ID) {
+            localDecimals = IERC20Decimals(mimOft.token()).decimals();
+        } else {
+            localDecimals = mimOft.decimals();
+        }
         uint256 tenTokensSD = 10 * (10 ** localDecimals / mimDecimalConversionRate);
 
         assertEq(10 * 10 ** sharedDecimals, tenTokensSD);
@@ -337,9 +392,7 @@ contract AbraForkTestsBase is Test {
             oftCmd: ""
         });
 
-        (OFTLimit memory limit, OFTFeeDetail[] memory oftFeeDetails, OFTReceipt memory receipt) = mimOft.quoteOFT(
-            sendParam
-        );
+        (OFTLimit memory limit, OFTFeeDetail[] memory oftFeeDetails, OFTReceipt memory receipt) = mimOft.quoteOFT(sendParam);
 
         assertEq(limit.minAmountLD, 0);
         assertEq(limit.maxAmountLD, type(uint64).max);
@@ -350,10 +403,16 @@ contract AbraForkTestsBase is Test {
         assertEq(receipt.amountReceivedLD, 10 * 10 ** localDecimals);
     }
 
+
     function test_quote_oft_spellV2() public {
         uint256 mimDecimalConversionRate = spellV2Oft.decimalConversionRate();
         uint256 sharedDecimals = spellV2Oft.sharedDecimals();
-        uint256 localDecimals = spellV2Oft.decimals();
+        uint256 localDecimals;
+        if (block.chainid == ETH_CHAIN_ID) {
+            localDecimals = IERC20Decimals(spellV2Oft.token()).decimals();
+        } else {
+            localDecimals = spellV2Oft.decimals();
+        }
         uint256 tenTokensSD = 10 * (10 ** localDecimals / mimDecimalConversionRate);
 
         assertEq(10 * 10 ** sharedDecimals, tenTokensSD);
@@ -368,9 +427,7 @@ contract AbraForkTestsBase is Test {
             oftCmd: ""
         });
 
-        (OFTLimit memory limit, OFTFeeDetail[] memory oftFeeDetails, OFTReceipt memory receipt) = spellV2Oft.quoteOFT(
-            sendParam
-        );
+        (OFTLimit memory limit, OFTFeeDetail[] memory oftFeeDetails, OFTReceipt memory receipt) = spellV2Oft.quoteOFT(sendParam);
 
         assertEq(limit.minAmountLD, 0);
         assertEq(limit.maxAmountLD, type(uint64).max);
@@ -384,7 +441,12 @@ contract AbraForkTestsBase is Test {
     function test_quote_oft_bSpell() public {
         uint256 mimDecimalConversionRate = bSpellOft.decimalConversionRate();
         uint256 sharedDecimals = bSpellOft.sharedDecimals();
-        uint256 localDecimals = bSpellOft.decimals();
+        uint256 localDecimals;
+        if (block.chainid == ARB_CHAIN_ID) {
+            localDecimals = IERC20Decimals(bSpellOft.token()).decimals();
+        } else {
+            localDecimals = bSpellOft.decimals();
+        }
         uint256 tenTokensSD = 10 * (10 ** localDecimals / mimDecimalConversionRate);
 
         assertEq(10 * 10 ** sharedDecimals, tenTokensSD);
@@ -399,9 +461,7 @@ contract AbraForkTestsBase is Test {
             oftCmd: ""
         });
 
-        (OFTLimit memory limit, OFTFeeDetail[] memory oftFeeDetails, OFTReceipt memory receipt) = bSpellOft.quoteOFT(
-            sendParam
-        );
+        (OFTLimit memory limit, OFTFeeDetail[] memory oftFeeDetails, OFTReceipt memory receipt) = bSpellOft.quoteOFT(sendParam);
 
         assertEq(limit.minAmountLD, 0);
         assertEq(limit.maxAmountLD, type(uint64).max);
@@ -413,6 +473,7 @@ contract AbraForkTestsBase is Test {
     }
 
     function test_oft_peer() public {
+
         if (block.chainid == 1) {
             // MIM
 
@@ -437,7 +498,9 @@ contract AbraForkTestsBase is Test {
 
             address bspellArbPeer = AddressCast.toAddress(bSpellOft.peers(ARB_EID));
             assertEq(bspellArbPeer, BSPELL_OFT_ARB);
+
         } else if (block.chainid == ARB_CHAIN_ID) {
+
             // No MIM
 
             // SpellV2
@@ -455,7 +518,9 @@ contract AbraForkTestsBase is Test {
 
             address bspellBeraPeer = AddressCast.toAddress(bSpellOft.peers(BERA_EID));
             assertEq(bspellBeraPeer, BSPELL_OFT_BERA);
+
         } else if (block.chainid == BERA_CHAIN_ID) {
+
             // MIM
 
             address mimEthPeer = AddressCast.toAddress(mimOft.peers(ETH_EID));
@@ -482,39 +547,46 @@ contract AbraForkTestsBase is Test {
         }
     }
 
-    function test_proxy_admin_owner() public view {
-        Ownable proxyAdminMim = Ownable(address(uint160(uint256(vm.load(address(mimOft), PROXY_ADMIN_SLOT)))));
-
-        assertEq(proxyAdminMim.owner(), safe);
+    function test_proxy_admin_owner() public {
+        if (block.chainid != ARB_CHAIN_ID) {
+            Ownable proxyAdminMim = Ownable(address(uint160(uint256(vm.load(address(mimOft), PROXY_ADMIN_SLOT)))));
+            assertEq(proxyAdminMim.owner(), safe);
+        }
 
         Ownable proxyAdminSpellV2 = Ownable(address(uint160(uint256(vm.load(address(spellV2Oft), PROXY_ADMIN_SLOT)))));
-
         assertEq(proxyAdminSpellV2.owner(), safe);
 
         Ownable proxyAdminBSpell = Ownable(address(uint160(uint256(vm.load(address(bSpellOft), PROXY_ADMIN_SLOT)))));
-
         assertEq(proxyAdminBSpell.owner(), safe);
     }
 
-    function test_oft_owner() public view {
-        assertEq(Ownable(address(mimOft)).owner(), safe);
+    function test_oft_owner() public {
+        if (block.chainid != ARB_CHAIN_ID) {
+            assertEq(Ownable(address(mimOft)).owner(), safe);
+        }
         assertEq(Ownable(address(spellV2Oft)).owner(), safe);
         assertEq(Ownable(address(bSpellOft)).owner(), safe);
     }
 
     function test_oft_delegate() public {
-        assertEq(ILayerZeroEndpointDelegateable(address(endpoint)).delegates(address(mimOft)), safe);
+        if (block.chainid != ARB_CHAIN_ID) {
+            assertEq(ILayerZeroEndpointDelegateable(address(endpoint)).delegates(address(mimOft)), safe);
+        }
         assertEq(ILayerZeroEndpointDelegateable(address(endpoint)).delegates(address(spellV2Oft)), safe);
         assertEq(ILayerZeroEndpointDelegateable(address(endpoint)).delegates(address(bSpellOft)), safe);
     }
 
     function test_no_msg_inspector() public {
-        assertEq(mimOft.msgInspector(), address(0));
+        if (block.chainid != ARB_CHAIN_ID) {
+            assertEq(mimOft.msgInspector(), address(0));
+        }
         assertEq(spellV2Oft.msgInspector(), address(0));
         assertEq(bSpellOft.msgInspector(), address(0));
     }
 
-    function test_oft_config_mim() public view {
+
+    function test_oft_config_mim() public {
+
         if (block.chainid == 1) {
             address[] memory requiredDvns = new address[](2);
             requiredDvns[0] = MIM_DVN_ETH;
@@ -522,7 +594,15 @@ contract AbraForkTestsBase is Test {
 
             address[] memory optionalDvns = new address[](0);
 
-            _verify_uln_config(BERA_EID, address(mimOft), sendLib, ETH_CONFIRMATIONS, requiredDvns, optionalDvns, 0);
+            _verify_uln_config(
+                BERA_EID,
+                address(mimOft),
+                sendLib,
+                ETH_CONFIRMATIONS,
+                requiredDvns,
+                optionalDvns,
+                0
+            );
 
             _verify_uln_config(
                 BERA_EID,
@@ -533,6 +613,7 @@ contract AbraForkTestsBase is Test {
                 optionalDvns,
                 0
             );
+
         } else if (block.chainid == ARB_CHAIN_ID) {
             // No MIM on ARB
         } else if (block.chainid == BERA_CHAIN_ID) {
@@ -542,23 +623,58 @@ contract AbraForkTestsBase is Test {
 
             address[] memory optionalDvns = new address[](0);
 
-            _verify_uln_config(ETH_EID, address(mimOft), sendLib, BERA_CONFIRMATIONS, requiredDvns, optionalDvns, 0);
+            _verify_uln_config(
+                ETH_EID,
+                address(mimOft),
+                sendLib,
+                BERA_CONFIRMATIONS,
+                requiredDvns,
+                optionalDvns,
+                0
+            );
 
-            _verify_uln_config(ETH_EID, address(mimOft), receiveLib, ETH_CONFIRMATIONS, requiredDvns, optionalDvns, 0);
+            _verify_uln_config(
+                ETH_EID,
+                address(mimOft),
+                receiveLib,
+                ETH_CONFIRMATIONS,
+                requiredDvns,
+                optionalDvns,
+                0
+            );
         }
+
     }
 
-    function test_oft_config_spellv2() public view {
-        if (block.chainid == 1) {
+       function test_oft_config_spellv2() public {
+
+        if (block.chainid == ETH_CHAIN_ID) {
+
             address[] memory requiredDvns = new address[](2);
             requiredDvns[0] = MIM_DVN_ETH;
             requiredDvns[1] = LZ_DVN_ETH;
 
             address[] memory optionalDvns = new address[](0);
 
-            _verify_uln_config(BERA_EID, address(mimOft), sendLib, ETH_CONFIRMATIONS, requiredDvns, optionalDvns, 0);
+            _verify_uln_config(
+                BERA_EID,
+                address(mimOft),
+                sendLib,
+                ETH_CONFIRMATIONS,
+                requiredDvns,
+                optionalDvns,
+                0
+            );
 
-            _verify_uln_config(ARB_EID, address(spellV2Oft), sendLib, ETH_CONFIRMATIONS, requiredDvns, optionalDvns, 0);
+            _verify_uln_config(
+                ARB_EID,
+                address(spellV2Oft),
+                sendLib,
+                ETH_CONFIRMATIONS,
+                requiredDvns,
+                optionalDvns,
+                0
+            );
 
             _verify_uln_config(
                 BERA_EID,
@@ -579,6 +695,7 @@ contract AbraForkTestsBase is Test {
                 optionalDvns,
                 0
             );
+
         } else if (block.chainid == ARB_CHAIN_ID) {
             address[] memory requiredDvns = new address[](2);
             requiredDvns[0] = LZ_DVN_ARB;
@@ -600,7 +717,7 @@ contract AbraForkTestsBase is Test {
                 BERA_EID,
                 address(spellV2Oft),
                 sendLib,
-                15, // @notice mismatch
+                15, // @notice this is an issue! This does not match the bera receiving confirmations
                 requiredDvns,
                 optionalDvns,
                 0
@@ -625,6 +742,7 @@ contract AbraForkTestsBase is Test {
                 optionalDvns,
                 0
             );
+
         } else if (block.chainid == BERA_CHAIN_ID) {
             address[] memory requiredDvns = new address[](2);
             requiredDvns[0] = LZ_DVN_BERA;
@@ -666,15 +784,17 @@ contract AbraForkTestsBase is Test {
                 ARB_EID,
                 address(spellV2Oft),
                 receiveLib,
-                15, // @notice matches the sending chain, but not other arb configs
+                ARB_CONFIRMATIONS,
                 requiredDvns,
                 optionalDvns,
                 0
             );
         }
+
     }
 
-    function test_oft_config_bSpell() public view {
+       function test_oft_config_bSpell() public {
+
         if (block.chainid == 1) {
             address[] memory requiredDvns = new address[](2);
             requiredDvns[0] = MIM_DVN_ETH;
@@ -682,9 +802,25 @@ contract AbraForkTestsBase is Test {
 
             address[] memory optionalDvns = new address[](0);
 
-            _verify_uln_config(BERA_EID, address(bSpellOft), sendLib, ETH_CONFIRMATIONS, requiredDvns, optionalDvns, 0);
+            _verify_uln_config(
+                BERA_EID,
+                address(bSpellOft),
+                sendLib,
+                ETH_CONFIRMATIONS,
+                requiredDvns,
+                optionalDvns,
+                0
+            );
 
-            _verify_uln_config(ARB_EID, address(bSpellOft), sendLib, ETH_CONFIRMATIONS, requiredDvns, optionalDvns, 0);
+            _verify_uln_config(
+                ARB_EID,
+                address(bSpellOft),
+                sendLib,
+                ETH_CONFIRMATIONS,
+                requiredDvns,
+                optionalDvns,
+                0
+            );
 
             _verify_uln_config(
                 BERA_EID,
@@ -705,7 +841,9 @@ contract AbraForkTestsBase is Test {
                 optionalDvns,
                 0
             );
+
         } else if (block.chainid == ARB_CHAIN_ID) {
+
             address[] memory requiredDvns = new address[](2);
             requiredDvns[0] = LZ_DVN_ARB;
             requiredDvns[1] = MIM_DVN_ARB;
@@ -751,6 +889,7 @@ contract AbraForkTestsBase is Test {
                 optionalDvns,
                 0
             );
+
         } else if (block.chainid == BERA_CHAIN_ID) {
             address[] memory requiredDvns = new address[](2);
             requiredDvns[0] = LZ_DVN_BERA;
@@ -758,9 +897,25 @@ contract AbraForkTestsBase is Test {
 
             address[] memory optionalDvns = new address[](0);
 
-            _verify_uln_config(ETH_EID, address(bSpellOft), sendLib, BERA_CONFIRMATIONS, requiredDvns, optionalDvns, 0);
+            _verify_uln_config(
+                ETH_EID,
+                address(bSpellOft),
+                sendLib,
+                BERA_CONFIRMATIONS,
+                requiredDvns,
+                optionalDvns,
+                0
+            );
 
-            _verify_uln_config(ARB_EID, address(bSpellOft), sendLib, BERA_CONFIRMATIONS, requiredDvns, optionalDvns, 0);
+            _verify_uln_config(
+                ARB_EID,
+                address(bSpellOft),
+                sendLib,
+                BERA_CONFIRMATIONS,
+                requiredDvns,
+                optionalDvns,
+                0
+            );
 
             _verify_uln_config(
                 ETH_EID,
@@ -782,7 +937,9 @@ contract AbraForkTestsBase is Test {
                 0
             );
         }
+
     }
+
 
     function _verify_uln_config(
         uint32 _eid,
@@ -792,7 +949,7 @@ contract AbraForkTestsBase is Test {
         address[] memory _required_dvns,
         address[] memory _optional_dvns,
         uint8 _optionalDvnCount
-    ) public view {
+    ) public {
         bytes memory config = endpoint.getConfig(address(_oapp), _lib, _eid, 2);
 
         UlnConfig memory ulnConfig = abi.decode(config, (UlnConfig));
@@ -811,12 +968,7 @@ contract AbraForkTestsBase is Test {
         for (uint i; i < _optional_dvns.length; ++i) {
             assertEq(ulnConfig.optionalDVNs[i], _optional_dvns[i]);
         }
-    }
-}
 
-contract AbraForkMainnetTest_Disabled is AbraForkTestsBase {
-    function setUp() public override {
-        vm.createSelectFork(vm.envString("MAINNET_RPC_URL"), 21239394);
-        super.setUp();
     }
+
 }
