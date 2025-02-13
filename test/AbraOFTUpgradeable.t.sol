@@ -20,6 +20,7 @@ import { FeeHandler, QuoteType } from "contracts/FeeHandler.sol";
 import { MockAggregator } from "./mocks/MockAggregator.sol";
 import { AbraOFTUpgradeable } from "contracts/AbraOFTUpgradeable.sol";
 import { AbraOFTAdapterUpgradeable } from "contracts/AbraOFTAdapterUpgradeable.sol";
+import { AbraOFTUpgradeableExisting } from "contracts/AbraOFTUpgradeableExisting.sol";
 
 contract AbraOFTUpgradeableTest is TestHelperOz5 {
     using OptionsBuilder for bytes;
@@ -51,7 +52,8 @@ contract AbraOFTUpgradeableTest is TestHelperOz5 {
         setUpEndpoints(3, LibraryType.UltraLightNode);
 
         aOFT = AbraOFTUpgradeable(
-            _deployContractAndProxy(
+            TestHelper.deployContractAndProxy(
+                proxyAdmin,
                 type(AbraOFTUpgradeable).creationCode,
                 abi.encode(address(endpoints[aEid])),
                 abi.encodeWithSelector(AbraOFTUpgradeable.initialize.selector, "aOFT", "aOFT", address(this))
@@ -59,7 +61,8 @@ contract AbraOFTUpgradeableTest is TestHelperOz5 {
         );
 
         bOFT = AbraOFTUpgradeable(
-            _deployContractAndProxy(
+            TestHelper.deployContractAndProxy(
+                proxyAdmin,
                 type(AbraOFTUpgradeable).creationCode,
                 abi.encode(address(endpoints[bEid])),
                 abi.encodeWithSelector(AbraOFTUpgradeable.initialize.selector, "bOFT", "bOFT", address(this))
@@ -68,7 +71,8 @@ contract AbraOFTUpgradeableTest is TestHelperOz5 {
 
         cERC20Mock = new ERC20Mock("cToken", "cToken");
         cOFTAdapter = AbraOFTAdapterUpgradeable(
-            _deployContractAndProxy(
+            TestHelper.deployContractAndProxy(
+                proxyAdmin,
                 type(AbraOFTAdapterUpgradeable).creationCode,
                 abi.encode(address(cERC20Mock), address(endpoints[cEid])),
                 abi.encodeWithSelector(AbraOFTAdapterUpgradeable.initialize.selector, address(this))
@@ -92,23 +96,7 @@ contract AbraOFTUpgradeableTest is TestHelperOz5 {
         oAppInspector = new OFTInspectorMock();
     }
 
-    function _deployContractAndProxy(
-        bytes memory _oappBytecode,
-        bytes memory _constructorArgs,
-        bytes memory _initializeArgs
-    ) internal returns (address addr) {
-        bytes memory bytecode = bytes.concat(abi.encodePacked(_oappBytecode), _constructorArgs);
-        assembly {
-            addr := create(0, add(bytecode, 0x20), mload(bytecode))
-            if iszero(extcodesize(addr)) {
-                revert(0, 0)
-            }
-        }
-
-        return address(new TransparentUpgradeableProxy(addr, proxyAdmin, _initializeArgs));
-    }
-
-    function test_constructor() public {
+    function test_constructor() public view {
         assertEq(aOFT.owner(), address(this));
         assertEq(bOFT.owner(), address(this));
         assertEq(cOFTAdapter.owner(), address(this));
@@ -122,7 +110,7 @@ contract AbraOFTUpgradeableTest is TestHelperOz5 {
         assertEq(cOFTAdapter.token(), address(cERC20Mock));
     }
 
-    function test_oftVersion() public {
+    function test_oftVersion() public view {
         (bytes4 interfaceId, ) = aOFT.oftVersion();
         bytes4 expectedId = 0x02e49c2c;
         assertEq(interfaceId, expectedId);
@@ -260,24 +248,24 @@ contract AbraOFTUpgradeableTest is TestHelperOz5 {
     function test_upgrade() public {
         // Deploy initial implementation
         AbraOFTUpgradeable initialImpl = new AbraOFTUpgradeable(address(endpoints[aEid]));
-        
+
         // Deploy ProxyAdmin
         ProxyAdmin admin = new ProxyAdmin(address(this));
-        
+
         // Deploy proxy with initialization data
         bytes memory initData = abi.encodeWithSelector(
-            AbraOFTUpgradeable.initialize.selector, 
-            "MyOFT", 
-            "MOFT", 
+            AbraOFTUpgradeable.initialize.selector,
+            "MyOFT",
+            "MOFT",
             address(this)
         );
-        
+
         TransparentUpgradeableProxy proxy = new TransparentUpgradeableProxy(
             address(initialImpl),
             address(admin),
             initData
         );
-        
+
         AbraOFTUpgradeable oft = AbraOFTUpgradeable(address(proxy));
 
         // Get initial implementation
@@ -285,13 +273,15 @@ contract AbraOFTUpgradeableTest is TestHelperOz5 {
 
         // Deploy mock implementation with mint function
         AbraOFTUpgradeableMock mockImpl = new AbraOFTUpgradeableMock(address(endpoints[aEid]));
-        
+
         // Upgrade to mock implementation
         vm.prank(address(this));
         admin.upgrade(TransparentUpgradeableProxy(payable(address(proxy))), address(mockImpl));
 
         // Verify implementation changed
-        address newImplAddress = address(admin.getProxyImplementation(TransparentUpgradeableProxy(payable(address(proxy)))));
+        address newImplAddress = address(
+            admin.getProxyImplementation(TransparentUpgradeableProxy(payable(address(proxy))))
+        );
         assertTrue(initialImplAddress != newImplAddress, "Implementation should change");
         assertEq(newImplAddress, address(mockImpl), "Should point to mock implementation");
 
@@ -302,7 +292,7 @@ contract AbraOFTUpgradeableTest is TestHelperOz5 {
 
         // Deploy new implementation without mint
         AbraOFTUpgradeable newImpl = new AbraOFTUpgradeable(address(endpoints[aEid]));
-        
+
         // Upgrade to new implementation
         vm.prank(address(this));
         admin.upgrade(TransparentUpgradeableProxy(payable(address(proxy))), address(newImpl));
@@ -314,10 +304,10 @@ contract AbraOFTUpgradeableTest is TestHelperOz5 {
     function test_upgrade_revert_unauthorized() public {
         // Deploy new implementation
         AbraOFTUpgradeable newImpl = new AbraOFTUpgradeable(address(endpoints[aEid]));
-        
+
         // Deploy ProxyAdmin
         ProxyAdmin admin = new ProxyAdmin(address(this));
-        
+
         // Try to upgrade from non-admin address
         vm.prank(userA);
         vm.expectRevert("Ownable: caller is not the owner");
@@ -325,7 +315,7 @@ contract AbraOFTUpgradeableTest is TestHelperOz5 {
     }
 
     // Helper function to get implementation address
-    function _getImplementationAddress(address proxy) internal view returns (address implementation) {
+    function _getImplementationAddress() internal view returns (address implementation) {
         // Storage slot for implementation address in EIP-1967
         bytes32 slot = 0x360894a13ba1a3210667c828492db98dca3e2076cc3735a920a3ca505d382bbc;
         assembly {
@@ -339,5 +329,122 @@ contract AbraOFTUpgradeableMock is AbraOFTUpgradeable {
 
     function mint(address _to, uint256 _amount) external {
         _mint(_to, _amount);
+    }
+}
+
+contract AbraOFTUpgradeableExistingTest is TestHelperOz5 {
+    using OptionsBuilder for bytes;
+
+    uint32 aEid = 1;
+    uint32 bEid = 2;
+
+    AbraOFTUpgradeableExisting aOFT;
+    AbraOFTUpgradeableExisting bOFT;
+    ERC20Mock aToken;
+    ERC20Mock bToken;
+
+    address public userA = address(0x1);
+    address public userB = address(0x2);
+    uint256 public initialBalance = 100 ether;
+
+    address public proxyAdmin = makeAddr("proxyAdmin");
+
+    function setUp() public virtual override {
+        vm.deal(userA, 1000 ether);
+        vm.deal(userB, 1000 ether);
+
+        super.setUp();
+        setUpEndpoints(2, LibraryType.UltraLightNode);
+
+        // Deploy underlying tokens
+        aToken = new ERC20Mock("aToken", "aTKN");
+        bToken = new ERC20Mock("bToken", "bTKN");
+
+        // Deploy OFTs with existing tokens
+        aOFT = AbraOFTUpgradeableExisting(
+            TestHelper.deployContractAndProxy(
+                proxyAdmin,
+                type(AbraOFTUpgradeableExisting).creationCode,
+                abi.encode(address(aToken), address(endpoints[aEid])),
+                abi.encodeWithSelector(AbraOFTUpgradeableExisting.initialize.selector, address(this))
+            )
+        );
+
+        bOFT = AbraOFTUpgradeableExisting(
+            TestHelper.deployContractAndProxy(
+                proxyAdmin,
+                type(AbraOFTUpgradeableExisting).creationCode,
+                abi.encode(address(bToken), address(endpoints[bEid])),
+                abi.encodeWithSelector(AbraOFTUpgradeableExisting.initialize.selector, address(this))
+            )
+        );
+
+        // Wire the OFTs
+        address[] memory ofts = new address[](2);
+        ofts[0] = address(aOFT);
+        ofts[1] = address(bOFT);
+        this.wireOApps(ofts);
+
+        // Mint tokens to users
+        deal(address(aToken), userA, initialBalance, true);
+        deal(address(bToken), userB, initialBalance, true);
+    }
+
+    function test_constructor_existing() public view {
+        assertEq(aOFT.owner(), address(this));
+        assertEq(bOFT.owner(), address(this));
+
+        assertEq(IERC20(aOFT.token()).balanceOf(userA), initialBalance);
+        assertEq(IERC20(bOFT.token()).balanceOf(userB), initialBalance);
+
+        assertEq(aOFT.token(), address(aToken));
+        assertEq(bOFT.token(), address(bToken));
+    }
+
+    function test_send_existing_oft() public {
+        uint256 tokensToSend = 1 ether;
+        bytes memory options = OptionsBuilder.newOptions().addExecutorLzReceiveOption(200000, 0);
+        SendParam memory sendParam = SendParam(
+            bEid,
+            addressToBytes32(userB),
+            tokensToSend,
+            tokensToSend,
+            options,
+            "",
+            ""
+        );
+        MessagingFee memory fee = aOFT.quoteSend(sendParam, false);
+
+        // Initial balances
+        assertEq(IERC20(aToken).balanceOf(userA), initialBalance);
+        assertEq(IERC20(bToken).balanceOf(userB), initialBalance);
+
+        // Send tokens
+        vm.prank(userA);
+        aOFT.send{ value: fee.nativeFee }(sendParam, fee, payable(address(this)));
+        verifyPackets(bEid, addressToBytes32(address(bOFT)));
+
+        // Verify balances after transfer
+        assertEq(IERC20(aToken).balanceOf(userA), initialBalance - tokensToSend);
+        assertEq(IERC20(bToken).balanceOf(userB), initialBalance + tokensToSend);
+    }
+}
+
+library TestHelper {
+    function deployContractAndProxy(
+        address _proxyAdmin,
+        bytes memory _oappBytecode,
+        bytes memory _constructorArgs,
+        bytes memory _initializeArgs
+    ) internal returns (address addr) {
+        bytes memory bytecode = bytes.concat(abi.encodePacked(_oappBytecode), _constructorArgs);
+        assembly {
+            addr := create(0, add(bytecode, 0x20), mload(bytecode))
+            if iszero(extcodesize(addr)) {
+                revert(0, 0)
+            }
+        }
+
+        return address(new TransparentUpgradeableProxy(addr, _proxyAdmin, _initializeArgs));
     }
 }

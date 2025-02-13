@@ -6,29 +6,29 @@ import { OAppUpgradeable } from "@layerzerolabs/oapp-evm-upgradeable/contracts/o
 import { OFTCoreUpgradeable } from "@layerzerolabs/oft-evm-upgradeable/contracts/oft/OFTCoreUpgradeable.sol";
 import { MessagingFee, MessagingReceipt } from "@layerzerolabs/lz-evm-protocol-v2/contracts/interfaces/ILayerZeroEndpointV2.sol";
 import { SenderWithFees } from "./SenderWithFees.sol";
-
-interface IMintable {
-    function mint(address to, uint256 amount) external returns (bool);
-    function burn(address from, uint256 amount) external  returns (bool);
-}
+import { IMintable } from "./interfaces/IMintable.sol";
+import { IERC20Metadata } from "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
 
 contract AbraOFTUpgradeableExisting is OFTCoreUpgradeable, SenderWithFees {
-
     IMintable internal immutable token_;
 
     function token() external view returns (address) {
         return address(token_);
     }
 
-    constructor(address _lzEndpoint) OFTCoreUpgradeable(18, _lzEndpoint) {
+    constructor(
+        address _token,
+        address _lzEndpoint
+    ) OFTCoreUpgradeable(IERC20Metadata(_token).decimals(), _lzEndpoint) {
         _disableInitializers();
+        token_ = IMintable(_token);
     }
 
     function initialize(address _delegate) public virtual initializer {
         __OFTCore_init(_delegate);
         __Ownable_init(_delegate);
     }
-    
+
     /**
      * @notice Indicates whether the OFT contract requires approval of the 'token()' to send.
      * @return requiresApproval Needs approval of the underlying token implementation.

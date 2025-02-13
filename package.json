@@ -6,11 +6,12 @@
   "scripts": {
     "clean": "rm -rf artifacts cache out",
     "compile": "hardhat compile",
+    "build": "hardhat compile",
     "lint": "$npm_execpath run lint:js && $npm_execpath run lint:sol",
     "lint:fix": "eslint --fix '**/*.{js,ts,json}' && prettier --write . && solhint 'contracts/**/*.sol' --fix --noPrompt",
     "lint:js": "eslint '**/*.{js,ts,json}' && prettier --check .",
     "lint:sol": "solhint 'contracts/**/*.sol'",
-    "test": "hardhat test"
+    "test": "forge test"
   },
   "resolutions": {
     "ethers": "^5.7.2",
