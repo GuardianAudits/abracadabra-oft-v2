@@ -99,7 +99,7 @@ const config: HardhatUserConfig = {
                 }
             },
             safeConfig: {
-                safeUrl: 'https://transaction.bp.w3us.site',
+                safeUrl: 'https://transaction.safe.berachain.com/',
                 safeAddress: BERA_SAFE_ADDRESS,
                 contractNetworks: {
                     // @ts-ignore
