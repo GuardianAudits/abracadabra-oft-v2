@@ -54,7 +54,7 @@ export default async function () {
     ]) as OmniEdgeHardhat<OAppEdgeConfig>[];
 
     // Prints generated connections
-    console.log(JSON.stringify(connections, (_, value) => typeof value === 'bigint' ? value.toString() : value, 2));
+    //console.log(JSON.stringify(connections, (_, value) => typeof value === 'bigint' ? value.toString() : value, 2));
 
     return {
         contracts: [
