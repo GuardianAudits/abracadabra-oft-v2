@@ -108,7 +108,7 @@ contract AbraOFTUpgradeableTest is TestHelperOz5 {
         return address(new TransparentUpgradeableProxy(addr, proxyAdmin, _initializeArgs));
     }
 
-    function test_constructor() public {
+    function test_constructor() public view {
         assertEq(aOFT.owner(), address(this));
         assertEq(bOFT.owner(), address(this));
         assertEq(cOFTAdapter.owner(), address(this));
@@ -122,7 +122,7 @@ contract AbraOFTUpgradeableTest is TestHelperOz5 {
         assertEq(cOFTAdapter.token(), address(cERC20Mock));
     }
 
-    function test_oftVersion() public {
+    function test_oftVersion() public view {
         (bytes4 interfaceId, ) = aOFT.oftVersion();
         bytes4 expectedId = 0x02e49c2c;
         assertEq(interfaceId, expectedId);
@@ -325,7 +325,7 @@ contract AbraOFTUpgradeableTest is TestHelperOz5 {
     }
 
     // Helper function to get implementation address
-    function _getImplementationAddress(address proxy) internal view returns (address implementation) {
+    function _getImplementationAddress() internal view returns (address implementation) {
         // Storage slot for implementation address in EIP-1967
         bytes32 slot = 0x360894a13ba1a3210667c828492db98dca3e2076cc3735a920a3ca505d382bbc;
         assembly {
