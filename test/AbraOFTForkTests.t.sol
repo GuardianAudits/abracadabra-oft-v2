@@ -931,21 +931,21 @@ contract AbraForkTestBase is Test {
 
 contract AbraForkEthTest is AbraForkTestBase {
     function setUp() public override {
-        vm.createSelectFork(vm.envString("MAINNET_RPC_URL"), 21845805);
+        vm.createSelectFork(vm.rpcUrl("mainnet"), 21845805);
         super.setUp();
     }
 }
 
 contract AbraForkArbitrumTest is AbraForkTestBase {
     function setUp() public override {
-        vm.createSelectFork(vm.envString("ARBITRUM_RPC_URL"), 306026400);
+        vm.createSelectFork(vm.rpcUrl("arbitrum"), 306026400);
         super.setUp();
     }
 }
 
 contract AbraForkBeraTest is AbraForkTestBase {
     function setUp() public override {
-        vm.createSelectFork(vm.envString("BERA_RPC_URL"), 1132358);
+        vm.createSelectFork(vm.rpcUrl("berachain"), 1132358);
         super.setUp();
     }
 }
