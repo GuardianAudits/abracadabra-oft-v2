@@ -4,7 +4,7 @@
   "private": true,
   "license": "MIT",
   "scripts": {
-    "clean": "rm -rf artifacts cache out",
+    "clean": "hardhat clean && forge clean",
     "compile": "hardhat compile",
     "build": "hardhat compile",
     "lint": "$npm_execpath run lint:js && $npm_execpath run lint:sol",

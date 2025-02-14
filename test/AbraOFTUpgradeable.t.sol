@@ -96,6 +96,22 @@ contract AbraOFTUpgradeableTest is TestHelperOz5 {
         oAppInspector = new OFTInspectorMock();
     }
 
+    function _deployContractAndProxy(
+        bytes memory _oappBytecode,
+        bytes memory _constructorArgs,
+        bytes memory _initializeArgs
+    ) internal returns (address addr) {
+        bytes memory bytecode = bytes.concat(abi.encodePacked(_oappBytecode), _constructorArgs);
+        assembly {
+            addr := create(0, add(bytecode, 0x20), mload(bytecode))
+            if iszero(extcodesize(addr)) {
+                revert(0, 0)
+            }
+        }
+
+        return address(new TransparentUpgradeableProxy(addr, proxyAdmin, _initializeArgs));
+    }
+
     function test_constructor() public view {
         assertEq(aOFT.owner(), address(this));
         assertEq(bOFT.owner(), address(this));
