@@ -1521,7 +1521,7 @@ contract AbraForkMintBurnMigration is Test {
         // TODO Add all other chains.
     }
 
-    function step1_close_mint_burn_alt_chains() public {
+    function step1_close_mint_burn_altchains() public {
         vm.selectFork(arbitrumId);
 
         vm.prank(ARBITRUM_SAFE);
@@ -1532,7 +1532,7 @@ contract AbraForkMintBurnMigration is Test {
 
     function step1_close_precrime() public {
         step1_close_precime_all_chains();
-        step1_close_mint_burn_alt_chains();
+        step1_close_mint_burn_altchains();
     }
 
     function test_step1() public {
@@ -1541,18 +1541,45 @@ contract AbraForkMintBurnMigration is Test {
 
     // ===========================================================
 
-    function step2_close_bridges_to_arb() public {
-        uint16 remoteChainId = 110;
-        bytes memory path = hex"00000000000000000000000000000000000000000000000000000000000000000000000000000000";
+    function step2_mint_bridge_total_supply_altchains() public {
+       
+       // ================= ARBITRUM ===================
+       
+        vm.selectFork(arbitrumId);
 
-        // Turn of Mainnet to Arb
-        vm.selectFork(mainnetId);
-        vm.prank(MAINNET_SAFE);
-        ILayerZero(MAINNET_OFT).setTrustedRemote(remoteChainId, path);
+        vm.startPrank(ARBITRUM_SAFE);
+
+        // Allow Minting
+        IElevated(ARBITRUM_ELEVATED).setOperator(ARBITRUM_OFT, true);
+        IElevated(ARBITRUM_ELEVATED).setOperator(ARBITRUM_SAFE, true);
+
+        // Mint MIM Total Supply
+        uint arbitrumTotalSupply = IERC20(ARBITRUM_MIM).totalSupply();
+        IElevated(ARBITRUM_ELEVATED).mint(ARBITRUM_SAFE, arbitrumTotalSupply);
+
+        // Bridge
+        ILzCommonOFT.LzCallParams memory callParams = ILzCommonOFT.LzCallParams({
+            refundAddress: payable(address(ARBITRUM_SAFE)),
+            zroPaymentAddress: address(0),
+            adapterParams: hex"000200000000000000000000000000000000000000000000000000000000000186a000000000000000000000000000000000000000000000000000000000000000003fa975ac91a8be601e800d4fa777c7200498f975"
+        });
+
+        // Convert the mainnet recipient to bytes32.
+        bytes32 recipientBytes = bytes32(uint256(uint160(MAINNET_V2_ADAPTER)));
+        ILzOFTV2(ARBITRUM_OFT).sendFrom{value: 0.004 ether}(ARBITRUM_SAFE, 101, recipientBytes, arbitrumTotalSupply, callParams);
+
+        // Disable Minting And Enable On New OFT
+        IElevated(ARBITRUM_ELEVATED).setOperator(ARBITRUM_OFT, false);
+        IElevated(ARBITRUM_ELEVATED).setOperator(ARBITRUM_SAFE, false);
+        IElevated(ARBITRUM_ELEVATED).setOperator(address(mimOFTExisting), true);
+
+        vm.stopPrank();
+
+        // TODO: Do this for all other altchains as well.
     }
 
-    function test_close_bridges() public {
-        step2_close_bridges_to_arb();
+    function test_step2() public {
+        step2_mint_bridge_total_supply_altchains();
     }
 
     // ===========================================================
@@ -1676,7 +1703,7 @@ contract AbraForkMintBurnMigration is Test {
         uint256 mainnetMIMSupplyBeforeMigration = IERC20(MAINNET_MIM).totalSupply();
 
         step1_close_precrime();
-        step2_close_bridges_to_arb();
+        step2_mint_bridge_total_supply_altchains();
         step3_close_arb_to_all_bridges();
         step4_mint_total_supply();
 
