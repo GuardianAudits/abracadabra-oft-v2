@@ -1028,6 +1028,8 @@ interface ILayerZero {
     ) external;
 
     function getTrustedRemoteAddress(uint16 _remoteChainId) external view returns (bytes memory);
+
+    function setPrecrime(address _precrime) external;
 }
 
 interface IElevated {
@@ -1128,7 +1130,7 @@ interface IOAppSetPeer {
     function endpoint() external view returns (ILayerZeroEndpointV2 iEndpoint);
 }
 
-contract AbraForkMigration is Test {
+contract AbraForkTrustedRemoteMigration is Test {
     using OptionsBuilder for bytes;
 
     address constant MAINNET_SAFE = 0x5f0DeE98360d8200b20812e174d139A1a633EDd2;
@@ -1237,6 +1239,299 @@ contract AbraForkMigration is Test {
     }
 
     function test_close_precrime_eth_arb() public {
+        step1_close_precrime();
+    }
+
+    // ===========================================================
+
+    function step2_close_bridges_to_arb() public {
+        uint16 remoteChainId = 110;
+        bytes memory path = hex"00000000000000000000000000000000000000000000000000000000000000000000000000000000";
+
+        // Turn of Mainnet to Arb
+        vm.selectFork(mainnetId);
+        vm.prank(MAINNET_SAFE);
+        ILayerZero(MAINNET_OFT).setTrustedRemote(remoteChainId, path);
+    }
+
+    function test_close_bridges() public {
+        step2_close_bridges_to_arb();
+    }
+
+    // ===========================================================
+
+    function step3_close_arb_to_all_bridges() public {
+        vm.selectFork(arbitrumId);
+        uint16[] memory remoteChainIds = new uint16[](11);
+        remoteChainIds[0] = 101;
+        remoteChainIds[1] = 102;
+        remoteChainIds[2] = 109;
+        remoteChainIds[3] = 112;
+        remoteChainIds[4] = 111;
+        remoteChainIds[5] = 106;
+        remoteChainIds[6] = 167;
+        remoteChainIds[7] = 177;
+        remoteChainIds[8] = 184;
+        remoteChainIds[9] = 183;
+        remoteChainIds[10] = 243;
+
+        // The empty _path to disable the trusted remote.
+        bytes memory emptyPath = hex"00000000000000000000000000000000000000000000000000000000000000000000000000000000";
+
+        ILayerZero bridge = ILayerZero(ARBITRUM_OFT);
+        vm.startPrank(ARBITRUM_SAFE);
+        // Loop through each remote chain ID and clear the trusted remote path.
+        for (uint256 i = 0; i < remoteChainIds.length; i++) {
+            bridge.setTrustedRemote(remoteChainIds[i], emptyPath);
+        }
+        vm.stopPrank();
+    }
+
+    function test_close_arb_to_all_bridges() public {
+        step3_close_arb_to_all_bridges();
+    }
+
+    // ===========================================================
+
+    function step4_mint_total_supply() public {
+        vm.selectFork(arbitrumId);
+        // --- Step 1: Allow Minting ---
+        vm.prank(ARBITRUM_SAFE);
+        IElevated(ARBITRUM_ELEVATED).setOperator(ARBITRUM_SAFE, true);
+
+        // --- Step 2: Mint MIM to ARB Safe ---
+        uint totalSupply = IERC20(ARBITRUM_MIM).totalSupply();
+        vm.prank(ARBITRUM_SAFE);
+        IElevated(ARBITRUM_ELEVATED).mint(ARBITRUM_SAFE, totalSupply);
+
+        // --- Step 3: Open ARB -> ETH Bridge ---
+        bytes memory openPath = hex"439a5f0f5e8d149dda9a0ca367d4a8e4d6f83c10957a8af7894e76e16db17c2a913496a4e60b7090";
+        ILayerZero bridge = ILayerZero(ARBITRUM_OFT);
+        vm.prank(ARBITRUM_SAFE);
+        bridge.setTrustedRemote(101, openPath);
+
+        // Step 4: Bridge MIM to Mainnet via LayerZero OFT.
+        // Prepare call parameters for the sendFrom call.
+        ILzCommonOFT.LzCallParams memory callParams = ILzCommonOFT.LzCallParams({
+            refundAddress: payable(address(ARBITRUM_SAFE)),
+            zroPaymentAddress: address(0),
+            adapterParams: hex"000200000000000000000000000000000000000000000000000000000000000186a000000000000000000000000000000000000000000000000000000000000000003fa975ac91a8be601e800d4fa777c7200498f975"
+        });
+
+        // Convert the mainnet recipient to bytes32.
+        bytes32 recipientBytes = bytes32(uint256(uint160(MAINNET_SAFE)));
+        vm.prank(ARBITRUM_SAFE);
+        ILzOFTV2(ARBITRUM_OFT).sendFrom{value: 0.004 ether}(ARBITRUM_SAFE, 101, recipientBytes, totalSupply, callParams);
+
+        // --- Step 5: Close ARB -> ETH Bridge ---
+        bytes memory closePath = hex"00000000000000000000000000000000000000000000000000000000000000000000000000000000";
+        vm.prank(ARBITRUM_SAFE);
+        bridge.setTrustedRemote(101, closePath);
+
+        // --- Step 6: Disable Minting ---
+        vm.startPrank(ARBITRUM_SAFE);
+        IElevated(ARBITRUM_ELEVATED).setOperator(ARBITRUM_SAFE, false);
+        IElevated(ARBITRUM_ELEVATED).setOperator(ARBITRUM_OFT, false);
+        IElevated(ARBITRUM_ELEVATED).setOperator(address(mimOFTExisting), true);
+        vm.stopPrank();
+
+        // Recieve the message
+        vm.selectFork(mainnetId);
+        bytes memory payload = abi.encodePacked(
+            bytes13(0),
+            MAINNET_SAFE,
+            uint64(totalSupply / 1e10) // adjust for ld2sd rate
+        );
+
+        // @notice Apply fix for current migration issue.
+        // ========================================================
+        uint16 remoteChainId = 110;
+        bytes memory path = hex"957a8af7894e76e16db17c2a913496a4e60b7090439a5f0f5e8d149dda9a0ca367d4a8e4d6f83c10";
+
+        // Turn of Mainnet to Arb
+        vm.selectFork(mainnetId);
+        vm.prank(MAINNET_SAFE);
+        ILayerZero(MAINNET_OFT).setTrustedRemote(remoteChainId, path);
+        // ========================================================
+
+        uint balanceBeforeReceive = IERC20(MAINNET_MIM).balanceOf(MAINNET_SAFE);
+        vm.prank(MAINNET_ENDPOINT);
+        ILayerZero(MAINNET_OFT).lzReceive(110, abi.encodePacked(ARBITRUM_OFT, MAINNET_OFT), 1000, payload);
+        uint balanceAfterReceive = IERC20(MAINNET_MIM).balanceOf(MAINNET_SAFE);
+
+        // Transfer received funds
+        uint receivedFunds = balanceAfterReceive - balanceBeforeReceive;
+        console.log("<step4> received funds:", receivedFunds);
+        vm.prank(MAINNET_SAFE);
+        IERC20(MAINNET_MIM).transfer(MAINNET_V2_ADAPTER, receivedFunds);
+    }
+
+    function test_mint_total_supply() public {
+        step4_mint_total_supply();
+    }
+    // ===========================================================
+
+    function test_run_all_steps() public {
+        vm.selectFork(arbitrumId);
+        uint256 arbitrumMIMSupplyBeforeMigration = IERC20(ARBITRUM_MIM).totalSupply();
+        vm.selectFork(mainnetId);
+        uint256 mainnetMIMBalanceAdapterBeforeMigration = IERC20(MAINNET_MIM).balanceOf(MAINNET_V2_ADAPTER);
+        uint256 mainnetMIMSupplyBeforeMigration = IERC20(MAINNET_MIM).totalSupply();
+
+        step1_close_precrime();
+        step2_close_bridges_to_arb();
+        step3_close_arb_to_all_bridges();
+        step4_mint_total_supply();
+
+        vm.selectFork(arbitrumId);
+        uint256 arbitrumMIMSupplyAfterMigration = IERC20(ARBITRUM_MIM).totalSupply();
+        vm.selectFork(mainnetId);
+        uint256 mainnetMIMBalanceAdapterAfterMigration = IERC20(MAINNET_MIM).balanceOf(MAINNET_V2_ADAPTER);
+        uint256 mainnetMIMSupplyAfterMigration = IERC20(MAINNET_MIM).totalSupply();
+
+        // Notice how theres a slight discrepency due to dust from LayerZero scaling
+        console.log("Arbitrum supply before migration....................", arbitrumMIMSupplyBeforeMigration);
+        console.log("Arbitrum supply after migration.....................", arbitrumMIMSupplyAfterMigration);
+
+        console.log("Mainnet Adapter Balance before migration............", mainnetMIMBalanceAdapterBeforeMigration);
+        console.log("Mainnet Adapter Balance after migration.............", mainnetMIMBalanceAdapterAfterMigration);
+
+        // Total supply stays the same
+        console.log("Mainnet supply before migration.....................", mainnetMIMSupplyBeforeMigration);
+        console.log("Mainnet supply after migration......................", mainnetMIMSupplyAfterMigration);
+    }
+
+    function test_transfer_mim_arb_to_mainnet() public {
+      test_run_all_steps();
+
+      // Set peers
+      vm.selectFork(arbitrumId);
+      vm.prank(address(this));
+      mimOFTExisting.setPeer(ETH_EID, bytes32(uint256(uint160(MAINNET_V2_ADAPTER))));
+
+      vm.selectFork(mainnetId);
+      vm.prank(0xDF2C270f610Dc35d8fFDA5B453E74db5471E126B); // owner
+      IOAppSetPeer(MAINNET_V2_ADAPTER).setPeer(ARB_EID, bytes32(uint256(uint160(address(mimOFTExisting)))));
+
+      // Set new OFT to be allowed to mint/burn
+      vm.selectFork(arbitrumId);
+      vm.prank(0xf46BB6dDA9709C49EfB918201D97F6474EAc5Aea);
+      IMIM(ARBITRUM_MIM).setMinter(address(mimOFTExisting));
+      skip(172800);
+      vm.prank(0xf46BB6dDA9709C49EfB918201D97F6474EAc5Aea);
+      IMIM(ARBITRUM_MIM).applyMinter();
+
+      // Send tokens from arb to mainnet
+      vm.selectFork(arbitrumId);
+      uint256 arbMIMBalanceBefore = IERC20(ARBITRUM_MIM).balanceOf(ARBITRUM_SAFE);
+
+      uint256 tokensToSend = 1 ether;
+      bytes memory options = OptionsBuilder.newOptions().addExecutorLzReceiveOption(200000, 0);
+      SendParam memory sendParam = SendParam(
+          ETH_EID,
+          bytes32(uint256(uint160(ARBITRUM_SAFE))),
+          tokensToSend,
+          tokensToSend,
+          options,
+          "",
+          ""
+      );
+      MessagingFee memory fee = mimOFTExisting.quoteSend(sendParam, false);
+
+      vm.prank(ARBITRUM_SAFE);
+      mimOFTExisting.send{ value: fee.nativeFee }(sendParam, fee, payable(address(ARBITRUM_SAFE)));
+
+      uint256 arbMIMBalanceAfter = IERC20(ARBITRUM_MIM).balanceOf(ARBITRUM_SAFE);
+      assertEq(arbMIMBalanceAfter, arbMIMBalanceBefore - tokensToSend);
+
+      // Receive tokens on mainnet
+      vm.selectFork(mainnetId);
+      uint256 mainnetMIMBalanceBefore = IERC20(MAINNET_MIM).balanceOf(ARBITRUM_SAFE);
+      vm.startPrank(MAINNET_V2_ENDPOINT);
+      (bytes memory message, ) = OFTMsgCodec.encode(OFTComposeMsgCodec.addressToBytes32(address(ARBITRUM_SAFE)), uint64(tokensToSend / 1e12), "");
+
+      IOAppReceiver(MAINNET_V2_ADAPTER).lzReceive(
+        Origin(ARB_EID, bytes32(uint256(uint160(address(mimOFTExisting)))), 0),
+        0,
+        message,
+        address(MAINNET_V2_ADAPTER),
+        ""
+      );
+
+      uint256 mainnetMIMBalanceAfter = IERC20(MAINNET_MIM).balanceOf(ARBITRUM_SAFE);
+      assertEq(mainnetMIMBalanceAfter, mainnetMIMBalanceBefore + tokensToSend);
+    }
+}
+
+contract AbraForkMintBurnMigration is Test {
+    using OptionsBuilder for bytes;
+
+    address constant MAINNET_SAFE = 0x5f0DeE98360d8200b20812e174d139A1a633EDd2;
+    address constant MAINNET_PRECRIME = 0xD0b97bd475f53767DBc7aDcD70f499000Edc916C;
+    address constant MAINNET_OFT = 0x439a5f0f5E8d149DDA9a0Ca367D4a8e4D6f83C10;
+    address constant MAINNET_ENDPOINT = 0x66A71Dcef29A0fFBDBE3c6a460a3B5BC225Cd675;
+    address constant MAINNET_MIM = 0x99D8a9C45b2ecA8864373A26D1459e3Dff1e17F3;
+    address constant MAINNET_V2_ADAPTER = 0xE5169F892000fC3BEd5660f62C67FAEE7F97718B;
+    address constant MAINNET_V2_ENDPOINT = 0x1a44076050125825900e736c501f859c50fE728c;
+
+    address constant ARBITRUM_SAFE = 0xf46BB6dDA9709C49EfB918201D97F6474EAc5Aea;
+    address constant ARBITRUM_PRECRIME = 0xD0b97bd475f53767DBc7aDcD70f499000Edc916C;
+    address constant ARBITRUM_OFT = 0x957A8Af7894E76e16DB17c2A913496a4E60B7090;
+    address constant ARBITRUM_ELEVATED = 0x26F20d6Dee51ad59AF339BEdF9f721113D01b6b3;
+    address constant ARBITRUM_MIM = 0xFEa7a6a0B346362BF88A9e4A88416B77a57D6c2A;
+    address constant ARBITRUM_V2_ENDPOINT = 0x1a44076050125825900e736c501f859c50fE728c;
+
+    uint32 constant ETH_EID = 30101;
+    uint32 constant ARB_EID = 30110;
+
+    uint arbitrumId;
+    uint mainnetId;
+
+    AbraOFTUpgradeableExisting mimOFTExisting;
+    address public proxyAdmin = makeAddr("proxyAdmin");
+
+    function setUp() public {
+        arbitrumId = vm.createSelectFork(vm.rpcUrl("arbitrum"), 306026400);
+        mimOFTExisting = AbraOFTUpgradeableExisting(
+            TestHelper.deployContractAndProxy(
+                proxyAdmin,
+                type(AbraOFTUpgradeableExisting).creationCode,
+                abi.encode(address(0xFEa7a6a0B346362BF88A9e4A88416B77a57D6c2A), address(ARBITRUM_V2_ENDPOINT)),
+                abi.encodeWithSelector(AbraOFTUpgradeableExisting.initialize.selector, address(this))
+            )
+        );
+
+        mainnetId = vm.createFork(vm.rpcUrl("mainnet"), 21845805);
+    }
+
+    function step1_close_precime_all_chains() public {
+        vm.selectFork(mainnetId);
+
+        vm.prank(MAINNET_SAFE);
+        ILayerZero(MAINNET_OFT).setPrecrime(address(0));
+
+        vm.selectFork(arbitrumId);
+        vm.prank(ARBITRUM_SAFE);
+        ILayerZero(ARBITRUM_OFT).setPrecrime(address(0));
+
+        // TODO Add all other chains.
+    }
+
+    function step1_close_mint_burn_alt_chains() public {
+        vm.selectFork(arbitrumId);
+
+        vm.prank(ARBITRUM_SAFE);
+        IElevated(ARBITRUM_ELEVATED).setOperator(ARBITRUM_OFT, false);
+
+        // TODO Add all other altchains.
+    }
+
+    function step1_close_precrime() public {
+        step1_close_precime_all_chains();
+        step1_close_mint_burn_alt_chains();
+    }
+
+    function test_step1() public {
         step1_close_precrime();
     }
 
