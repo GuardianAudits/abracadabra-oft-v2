@@ -1572,6 +1572,18 @@ contract AbraForkMintBurnMigration is Test {
 
         vm.stopPrank();
 
+        bytes memory payload = abi.encodePacked(
+            bytes13(0),
+            MAINNET_V2_ADAPTER,
+            uint64(arbitrumTotalSupply / 1e10) // adjust for ld2sd rate
+        );
+
+        // Receive ARB -> ETH transfer
+        vm.selectFork(mainnetId);
+        vm.prank(MAINNET_ENDPOINT);
+        ILayerZero(MAINNET_OFT).lzReceive(110, abi.encodePacked(ARBITRUM_OFT, MAINNET_OFT), 1000, payload);
+
+
         // TODO: Do this for all other altchains as well.
     }
 
