@@ -1491,6 +1491,15 @@ contract AbraForkMintBurnMigration is Test {
 
     uint arbitrumId;
     uint mainnetId;
+    uint bscID;
+    uint polygonId;
+    uint ftmId;
+    uint optimismId;
+    uint moonriverId;
+    uint kavaId;
+    uint baseId;
+    uint lineaId;
+    uint blastId;
 
     AbraOFTUpgradeableExisting mimOFTExisting;
     address public proxyAdmin = makeAddr("proxyAdmin");
@@ -1507,6 +1516,15 @@ contract AbraForkMintBurnMigration is Test {
         );
 
         mainnetId = vm.createFork(vm.rpcUrl("mainnet"), 21845805);
+        bscID = vm.createFork(vm.rpcUrl("bsc"));
+        polygonId = vm.createFork(vm.rpcUrl("polygon"));
+        ftmId = vm.createFork(vm.rpcUrl("ftm"));
+        optimismId = vm.createFork(vm.rpcUrl("optimism"));
+        moonriverId = vm.createFork(vm.rpcUrl("moonriver"));
+        kavaId = vm.createFork(vm.rpcUrl("kava"));
+        baseId = vm.createFork(vm.rpcUrl("base"));
+        lineaId = vm.createFork(vm.rpcUrl("linea"));
+        blastId = vm.createFork(vm.rpcUrl("blast"));
     }
 
     function step1_close_precime_all_chains() public {
