@@ -1415,13 +1415,13 @@ contract AbraForkMigration is Test {
       vm.prank(0xDF2C270f610Dc35d8fFDA5B453E74db5471E126B); // owner
       IOAppSetPeer(MAINNET_V2_ADAPTER).setPeer(ARB_EID, bytes32(uint256(uint160(address(mimOFTExisting)))));
 
-      // // Set new OFT to be allowed to mint/burn
-      // vm.selectFork(arbitrumId);
-      // vm.prank(0xf46BB6dDA9709C49EfB918201D97F6474EAc5Aea);
-      // IMIM(ARBITRUM_MIM).setMinter(address(mimOFTExisting));
-      // skip(172800);
-      // vm.prank(0xf46BB6dDA9709C49EfB918201D97F6474EAc5Aea);
-      // IMIM(ARBITRUM_MIM).applyMinter();
+      // Set new OFT to be allowed to mint/burn
+      vm.selectFork(arbitrumId);
+      vm.prank(0xf46BB6dDA9709C49EfB918201D97F6474EAc5Aea);
+      IMIM(ARBITRUM_MIM).setMinter(address(mimOFTExisting));
+      skip(172800);
+      vm.prank(0xf46BB6dDA9709C49EfB918201D97F6474EAc5Aea);
+      IMIM(ARBITRUM_MIM).applyMinter();
 
       // Send tokens from arb to mainnet
       vm.selectFork(arbitrumId);
