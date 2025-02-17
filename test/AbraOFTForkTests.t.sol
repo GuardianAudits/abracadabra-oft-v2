@@ -1472,6 +1472,7 @@ contract AbraForkMintBurnMigration is Test {
     address constant MAINNET_ENDPOINT = 0x66A71Dcef29A0fFBDBE3c6a460a3B5BC225Cd675;
     address constant MAINNET_MIM = 0x99D8a9C45b2ecA8864373A26D1459e3Dff1e17F3;
     address constant MAINNET_V2_ADAPTER = 0xE5169F892000fC3BEd5660f62C67FAEE7F97718B;
+    address constant MAINNET_V2_ADAPTER_OWNER = 0xDF2C270f610Dc35d8fFDA5B453E74db5471E126B;
     address constant MAINNET_V2_ENDPOINT = 0x1a44076050125825900e736c501f859c50fE728c;
 
     address constant ARBITRUM_SAFE = 0xf46BB6dDA9709C49EfB918201D97F6474EAc5Aea;
@@ -1580,115 +1581,31 @@ contract AbraForkMintBurnMigration is Test {
 
     // ===========================================================
 
-    function step3_close_arb_to_all_bridges() public {
+    function step3_activate_mimv2_bridges() public {
+        // Set peers
         vm.selectFork(arbitrumId);
-        uint16[] memory remoteChainIds = new uint16[](11);
-        remoteChainIds[0] = 101;
-        remoteChainIds[1] = 102;
-        remoteChainIds[2] = 109;
-        remoteChainIds[3] = 112;
-        remoteChainIds[4] = 111;
-        remoteChainIds[5] = 106;
-        remoteChainIds[6] = 167;
-        remoteChainIds[7] = 177;
-        remoteChainIds[8] = 184;
-        remoteChainIds[9] = 183;
-        remoteChainIds[10] = 243;
+        vm.prank(address(this));
+        mimOFTExisting.setPeer(ETH_EID, bytes32(uint256(uint160(MAINNET_V2_ADAPTER))));
 
-        // The empty _path to disable the trusted remote.
-        bytes memory emptyPath = hex"00000000000000000000000000000000000000000000000000000000000000000000000000000000";
+        vm.selectFork(mainnetId);
+        vm.prank(MAINNET_V2_ADAPTER_OWNER); 
+        IOAppSetPeer(MAINNET_V2_ADAPTER).setPeer(ARB_EID, bytes32(uint256(uint160(address(mimOFTExisting)))));
 
-        ILayerZero bridge = ILayerZero(ARBITRUM_OFT);
-        vm.startPrank(ARBITRUM_SAFE);
-        // Loop through each remote chain ID and clear the trusted remote path.
-        for (uint256 i = 0; i < remoteChainIds.length; i++) {
-            bridge.setTrustedRemote(remoteChainIds[i], emptyPath);
-        }
-        vm.stopPrank();
-    }
-
-    function test_close_arb_to_all_bridges() public {
-        step3_close_arb_to_all_bridges();
-    }
-
-    // ===========================================================
-
-    function step4_mint_total_supply() public {
+        // Set new OFT to be allowed to mint/burn
+        // This has to be done because the new OFT does not debit/credit through the ElevatedMinterBurner
         vm.selectFork(arbitrumId);
-        // --- Step 1: Allow Minting ---
         vm.prank(ARBITRUM_SAFE);
-        IElevated(ARBITRUM_ELEVATED).setOperator(ARBITRUM_SAFE, true);
-
-        // --- Step 2: Mint MIM to ARB Safe ---
-        uint totalSupply = IERC20(ARBITRUM_MIM).totalSupply();
+        IMIM(ARBITRUM_MIM).setMinter(address(mimOFTExisting));
+        skip(172800);
         vm.prank(ARBITRUM_SAFE);
-        IElevated(ARBITRUM_ELEVATED).mint(ARBITRUM_SAFE, totalSupply);
+        IMIM(ARBITRUM_MIM).applyMinter();
 
-        // --- Step 3: Open ARB -> ETH Bridge ---
-        bytes memory openPath = hex"439a5f0f5e8d149dda9a0ca367d4a8e4d6f83c10957a8af7894e76e16db17c2a913496a4e60b7090";
-        ILayerZero bridge = ILayerZero(ARBITRUM_OFT);
-        vm.prank(ARBITRUM_SAFE);
-        bridge.setTrustedRemote(101, openPath);
-
-        // Step 4: Bridge MIM to Mainnet via LayerZero OFT.
-        // Prepare call parameters for the sendFrom call.
-        ILzCommonOFT.LzCallParams memory callParams = ILzCommonOFT.LzCallParams({
-            refundAddress: payable(address(ARBITRUM_SAFE)),
-            zroPaymentAddress: address(0),
-            adapterParams: hex"000200000000000000000000000000000000000000000000000000000000000186a000000000000000000000000000000000000000000000000000000000000000003fa975ac91a8be601e800d4fa777c7200498f975"
-        });
-
-        // Convert the mainnet recipient to bytes32.
-        bytes32 recipientBytes = bytes32(uint256(uint160(MAINNET_SAFE)));
-        vm.prank(ARBITRUM_SAFE);
-        ILzOFTV2(ARBITRUM_OFT).sendFrom{value: 0.004 ether}(ARBITRUM_SAFE, 101, recipientBytes, totalSupply, callParams);
-
-        // --- Step 5: Close ARB -> ETH Bridge ---
-        bytes memory closePath = hex"00000000000000000000000000000000000000000000000000000000000000000000000000000000";
-        vm.prank(ARBITRUM_SAFE);
-        bridge.setTrustedRemote(101, closePath);
-
-        // --- Step 6: Disable Minting ---
-        vm.startPrank(ARBITRUM_SAFE);
-        IElevated(ARBITRUM_ELEVATED).setOperator(ARBITRUM_SAFE, false);
-        IElevated(ARBITRUM_ELEVATED).setOperator(ARBITRUM_OFT, false);
-        IElevated(ARBITRUM_ELEVATED).setOperator(address(mimOFTExisting), true);
-        vm.stopPrank();
-
-        // Recieve the message
-        vm.selectFork(mainnetId);
-        bytes memory payload = abi.encodePacked(
-            bytes13(0),
-            MAINNET_SAFE,
-            uint64(totalSupply / 1e10) // adjust for ld2sd rate
-        );
-
-        // @notice Apply fix for current migration issue.
-        // ========================================================
-        uint16 remoteChainId = 110;
-        bytes memory path = hex"957a8af7894e76e16db17c2a913496a4e60b7090439a5f0f5e8d149dda9a0ca367d4a8e4d6f83c10";
-
-        // Turn of Mainnet to Arb
-        vm.selectFork(mainnetId);
-        vm.prank(MAINNET_SAFE);
-        ILayerZero(MAINNET_OFT).setTrustedRemote(remoteChainId, path);
-        // ========================================================
-
-        uint balanceBeforeReceive = IERC20(MAINNET_MIM).balanceOf(MAINNET_SAFE);
-        vm.prank(MAINNET_ENDPOINT);
-        ILayerZero(MAINNET_OFT).lzReceive(110, abi.encodePacked(ARBITRUM_OFT, MAINNET_OFT), 1000, payload);
-        uint balanceAfterReceive = IERC20(MAINNET_MIM).balanceOf(MAINNET_SAFE);
-
-        // Transfer received funds
-        uint receivedFunds = balanceAfterReceive - balanceBeforeReceive;
-        console.log("<step4> received funds:", receivedFunds);
-        vm.prank(MAINNET_SAFE);
-        IERC20(MAINNET_MIM).transfer(MAINNET_V2_ADAPTER, receivedFunds);
     }
 
-    function test_mint_total_supply() public {
-        step4_mint_total_supply();
+    function test_step3() public {
+        step3_activate_mimv2_bridges();
     }
+
     // ===========================================================
 
     function test_run_all_steps() public {
@@ -1700,9 +1617,8 @@ contract AbraForkMintBurnMigration is Test {
 
         step1_close_precrime();
         step2_mint_bridge_total_supply_altchains();
-        step3_close_arb_to_all_bridges();
-        step4_mint_total_supply();
-
+        step3_activate_mimv2_bridges();
+        
         vm.selectFork(arbitrumId);
         uint256 arbitrumMIMSupplyAfterMigration = IERC20(ARBITRUM_MIM).totalSupply();
         vm.selectFork(mainnetId);
