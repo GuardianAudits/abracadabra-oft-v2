@@ -20,7 +20,7 @@ const configurations = {
     ],
     'bera-mainnet': [
         0, // no fixed native fee, using an oracle
-        "0x0000000000000000000000000000000000000000", // BERA/USD feed
+        "0x29d2fEC890B037B2d34f061F9a50f76F85ddBcAE", // BERA/USD feed
         "0x6AebC72aa1dfc63F4Ef473e4050cFa4895b1E07E", // Treasury Yields
         0, // QuoteType.Oracle
         "0xa4EF0376a91872B9c5d53D10410Bdf36e6Cf4e5E" // Ops 
