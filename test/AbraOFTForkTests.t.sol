@@ -1477,14 +1477,11 @@ contract AbraForkMintBurnMigration is Test {
     address constant MAINNET_MIM = 0x99D8a9C45b2ecA8864373A26D1459e3Dff1e17F3;
     address constant MAINNET_V2_ADAPTER = 0xE5169F892000fC3BEd5660f62C67FAEE7F97718B;
     address constant MAINNET_V2_ADAPTER_OWNER = 0xDF2C270f610Dc35d8fFDA5B453E74db5471E126B;
-    address constant MAINNET_V2_ENDPOINT = 0x1a44076050125825900e736c501f859c50fE728c;
 
     address constant ARBITRUM_SAFE = 0xf46BB6dDA9709C49EfB918201D97F6474EAc5Aea;
     address constant ARBITRUM_PRECRIME = 0xD0b97bd475f53767DBc7aDcD70f499000Edc916C;
     address constant ARBITRUM_OFT = 0x957A8Af7894E76e16DB17c2A913496a4E60B7090;
     address constant ARBITRUM_ELEVATED = 0x26F20d6Dee51ad59AF339BEdF9f721113D01b6b3;
-    address constant ARBITRUM_MIM = 0xFEa7a6a0B346362BF88A9e4A88416B77a57D6c2A;
-    address constant ARBITRUM_V2_ENDPOINT = 0x1a44076050125825900e736c501f859c50fE728c;
 
     address constant BSC_SAFE = 0x9d9bC38bF4A128530EA45A7d27D0Ccb9C2EbFaf6;
     address constant POLYGON_SAFE = 0x7d847c4A0151FC6e79C6042D8f5B811753f4F66e;
@@ -1519,8 +1516,32 @@ contract AbraForkMintBurnMigration is Test {
     address constant LINEA_ELEVATED = 0xDD3B8084AF79B9BaE3D1b668c0De08CCC2C9429A;
     address constant BLAST_ELEVATED = 0x76DA31D7C9CbEAE102aff34D3398bC450c8374c1;
 
+    address constant ARBITRUM_MIM = 0xFEa7a6a0B346362BF88A9e4A88416B77a57D6c2A;
+    address constant BSC_MIM = 0xfE19F0B51438fd612f6FD59C1dbB3eA319f433Ba;
+    address constant POLYGON_MIM = 0x49a0400587A7F65072c87c4910449fDcC5c47242;
+    address constant FANTOM_MIM = 0x82f0B8B456c1A451378467398982d4834b6829c1;
+    address constant OPTIMISM_MIM = 0xB153FB3d196A8eB25522705560ac152eeEc57901;
+    address constant MOONRIVER_MIM = 0x0caE51e1032e8461f4806e26332c030E34De3aDb;
+    address constant KAVA_MIM = 0x471EE749bA270eb4c1165B5AD95E614947f6fCeb;
+    address constant BASE_MIM = 0x4A3A6Dd60A34bB2Aba60D73B4C88315E9CeB6A3D;
+    address constant LINEA_MIM = 0xDD3B8084AF79B9BaE3D1b668c0De08CCC2C9429A;
+    address constant BLAST_MIM = 0x76DA31D7C9CbEAE102aff34D3398bC450c8374c1;
+    address constant AVALANCHE_MIM = 0x130966628846BFd36ff31a822705796e8cb8C18D;
+
+    address constant MAINNET_V2_ENDPOINT = 0x1a44076050125825900e736c501f859c50fE728c;
+    address constant ARBITRUM_V2_ENDPOINT = 0x1a44076050125825900e736c501f859c50fE728c;
+    address constant BSC_V2_ENDPOINT = 0x1a44076050125825900e736c501f859c50fE728c;
+    address constant POLYGON_V2_ENDPOINT = 0x1a44076050125825900e736c501f859c50fE728c;
+    address constant FANTOM_V2_ENDPOINT = 0x1a44076050125825900e736c501f859c50fE728c;
+    address constant OPTIMISM_V2_ENDPOINT = 0x1a44076050125825900e736c501f859c50fE728c;
+    address constant MOONRIVER_V2_ENDPOINT = 0x1a44076050125825900e736c501f859c50fE728c;
+    address constant KAVA_V2_ENDPOINT = 0x1a44076050125825900e736c501f859c50fE728c;
+    address constant BASE_V2_ENDPOINT = 0x1a44076050125825900e736c501f859c50fE728c;
+    address constant LINEA_V2_ENDPOINT = 0x1a44076050125825900e736c501f859c50fE728c;
+    address constant BLAST_V2_ENDPOINT = 0x1a44076050125825900e736c501f859c50fE728c;
+    address constant AVALANCHE_V2_ENDPOINT = 0x1a44076050125825900e736c501f859c50fE728c;
+
     uint32 constant ETH_EID = 30101;
-    uint32 constant ARB_EID = 30110;
 
     uint arbitrumId;
     uint mainnetId;
@@ -1535,31 +1556,260 @@ contract AbraForkMintBurnMigration is Test {
     uint blastId;
     uint avalancheId;
 
-    AbraOFTUpgradeableExisting mimOFTExisting;
+    AbraOFTUpgradeableExisting OFTV2Arbitrum;
+    AbraOFTUpgradeableExisting OFTV2Bsc;
+    AbraOFTUpgradeableExisting OFTV2Polygon;
+    AbraOFTUpgradeableExisting OFTV2Fantom;
+    AbraOFTUpgradeableExisting OFTV2Optimism;
+    AbraOFTUpgradeableExisting OFTV2Moonriver;
+    AbraOFTUpgradeableExisting OFTV2Kava;
+    AbraOFTUpgradeableExisting OFTV2Base;
+    AbraOFTUpgradeableExisting OFTV2Linea;
+    AbraOFTUpgradeableExisting OFTV2Blast;
+    AbraOFTUpgradeableExisting OFTV2Avalanche;
+
+    struct AltChainData {
+        uint forkId;
+        address safe;
+        address oft;
+        address elevated;
+        address mim;
+        AbraOFTUpgradeableExisting oftV2;
+        uint16 eid;
+        uint16 eidV2;
+    }
+
+    AltChainData[] altChains;
+
     address public proxyAdmin = makeAddr("proxyAdmin");
 
     function setUp() public {
+        mainnetId = vm.createFork(vm.rpcUrl("mainnet"), 21845805);
+
         arbitrumId = vm.createSelectFork(vm.rpcUrl("arbitrum"), 306026400);
-        mimOFTExisting = AbraOFTUpgradeableExisting(
+        OFTV2Arbitrum = AbraOFTUpgradeableExisting(
             TestHelper.deployContractAndProxy(
                 proxyAdmin,
                 type(AbraOFTUpgradeableExisting).creationCode,
-                abi.encode(address(0xFEa7a6a0B346362BF88A9e4A88416B77a57D6c2A), address(ARBITRUM_V2_ENDPOINT)),
+                abi.encode(address(ARBITRUM_MIM), address(ARBITRUM_V2_ENDPOINT)),
                 abi.encodeWithSelector(AbraOFTUpgradeableExisting.initialize.selector, address(this))
             )
         );
 
-        mainnetId = vm.createFork(vm.rpcUrl("mainnet"), 21845805);
-        bscId = vm.createFork(vm.rpcUrl("bsc"), 46751901);
-        polygonId = vm.createFork(vm.rpcUrl("polygon"), 68053239);
-        fantomId = vm.createFork(vm.rpcUrl("ftm"));
-        optimismId = vm.createFork(vm.rpcUrl("optimism"));
-        moonriverId = vm.createFork(vm.rpcUrl("moonriver"));
-        kavaId = vm.createFork(vm.rpcUrl("kava"));
-        baseId = vm.createFork(vm.rpcUrl("base"), 26523912);
-        lineaId = vm.createFork(vm.rpcUrl("linea"));
-        blastId = vm.createFork(vm.rpcUrl("blast"));
-        avalancheId = vm.createFork(vm.rpcUrl("avalanche"));
+        bscId = vm.createSelectFork(vm.rpcUrl("bsc"), 46751901);
+        OFTV2Bsc = AbraOFTUpgradeableExisting(
+            TestHelper.deployContractAndProxy(
+                proxyAdmin,
+                type(AbraOFTUpgradeableExisting).creationCode,
+                abi.encode(address(BSC_MIM), address(BSC_V2_ENDPOINT)),
+                abi.encodeWithSelector(AbraOFTUpgradeableExisting.initialize.selector, address(this))
+            )
+        );
+
+        polygonId = vm.createSelectFork(vm.rpcUrl("polygon"), 68053239);
+        OFTV2Polygon = AbraOFTUpgradeableExisting(
+            TestHelper.deployContractAndProxy(
+                proxyAdmin,
+                type(AbraOFTUpgradeableExisting).creationCode,
+                abi.encode(address(POLYGON_MIM), address(POLYGON_V2_ENDPOINT)),
+                abi.encodeWithSelector(AbraOFTUpgradeableExisting.initialize.selector, address(this))
+            )
+        );
+
+        fantomId = vm.createSelectFork(vm.rpcUrl("ftm"), 104956815);
+        OFTV2Fantom = AbraOFTUpgradeableExisting(
+            TestHelper.deployContractAndProxy(
+                proxyAdmin,
+                type(AbraOFTUpgradeableExisting).creationCode,
+                abi.encode(address(FANTOM_MIM), address(FANTOM_V2_ENDPOINT)),
+                abi.encodeWithSelector(AbraOFTUpgradeableExisting.initialize.selector, address(this))
+            )
+        );
+
+        optimismId = vm.createSelectFork(vm.rpcUrl("optimism"), 132141992);
+        OFTV2Optimism = AbraOFTUpgradeableExisting(
+            TestHelper.deployContractAndProxy(
+                proxyAdmin,
+                type(AbraOFTUpgradeableExisting).creationCode,
+                abi.encode(address(OPTIMISM_MIM), address(OPTIMISM_V2_ENDPOINT)),
+                abi.encodeWithSelector(AbraOFTUpgradeableExisting.initialize.selector, address(this))
+            )
+        );
+
+        moonriverId = vm.createSelectFork(vm.rpcUrl("moonriver"), 10381040);
+        OFTV2Moonriver = AbraOFTUpgradeableExisting(
+            TestHelper.deployContractAndProxy(
+                proxyAdmin,
+                type(AbraOFTUpgradeableExisting).creationCode,
+                abi.encode(address(MOONRIVER_MIM), address(MOONRIVER_V2_ENDPOINT)),
+                abi.encodeWithSelector(AbraOFTUpgradeableExisting.initialize.selector, address(this))
+            )
+        );
+
+        kavaId = vm.createSelectFork(vm.rpcUrl("kava"));
+        OFTV2Kava = AbraOFTUpgradeableExisting(
+            TestHelper.deployContractAndProxy(
+                proxyAdmin,
+                type(AbraOFTUpgradeableExisting).creationCode,
+                abi.encode(address(KAVA_MIM), address(KAVA_V2_ENDPOINT)),
+                abi.encodeWithSelector(AbraOFTUpgradeableExisting.initialize.selector, address(this))
+            )
+        );
+
+        baseId = vm.createSelectFork(vm.rpcUrl("base"), 26523912);
+        OFTV2Base = AbraOFTUpgradeableExisting(
+            TestHelper.deployContractAndProxy(
+                proxyAdmin,
+                type(AbraOFTUpgradeableExisting).creationCode,
+                abi.encode(address(BASE_MIM), address(BASE_V2_ENDPOINT)),
+                abi.encodeWithSelector(AbraOFTUpgradeableExisting.initialize.selector, address(this))
+            )
+        );
+
+        lineaId = vm.createSelectFork(vm.rpcUrl("linea"));
+        OFTV2Linea = AbraOFTUpgradeableExisting(
+            TestHelper.deployContractAndProxy(
+                proxyAdmin,
+                type(AbraOFTUpgradeableExisting).creationCode,
+                abi.encode(address(LINEA_MIM), address(LINEA_V2_ENDPOINT)),
+                abi.encodeWithSelector(AbraOFTUpgradeableExisting.initialize.selector, address(this))
+            )
+        );
+
+        blastId = vm.createSelectFork(vm.rpcUrl("blast"), 15536504);
+        OFTV2Blast = AbraOFTUpgradeableExisting(
+            TestHelper.deployContractAndProxy(
+                proxyAdmin,
+                type(AbraOFTUpgradeableExisting).creationCode,
+                abi.encode(address(BLAST_MIM), address(BLAST_V2_ENDPOINT)),
+                abi.encodeWithSelector(AbraOFTUpgradeableExisting.initialize.selector, address(this))
+            )
+        );
+
+        avalancheId = vm.createSelectFork(vm.rpcUrl("avalanche"), 57503724);
+        OFTV2Avalanche = AbraOFTUpgradeableExisting(
+            TestHelper.deployContractAndProxy(
+                proxyAdmin,
+                type(AbraOFTUpgradeableExisting).creationCode,
+                abi.encode(address(AVALANCHE_MIM), address(AVALANCHE_V2_ENDPOINT)),
+                abi.encodeWithSelector(AbraOFTUpgradeableExisting.initialize.selector, address(this))
+            )
+        );
+
+        _initChainData();
+    }
+
+    function _initChainData() private {
+        altChains.push(AltChainData(
+            arbitrumId,
+            ARBITRUM_SAFE,
+            ARBITRUM_OFT,
+            ARBITRUM_ELEVATED,
+            ARBITRUM_MIM,
+            OFTV2Arbitrum,
+            110,
+            30110
+        ));
+        altChains.push(AltChainData(
+            bscId,
+            BSC_SAFE,
+            BSC_OFT,
+            BSC_ELEVATED,
+            BSC_MIM,
+            OFTV2Bsc,
+            102,
+            30102
+        ));
+        altChains.push(AltChainData(
+            polygonId,
+            POLYGON_SAFE,
+            POLYGON_OFT,
+            POLYGON_ELEVATED,
+            POLYGON_MIM,
+            OFTV2Polygon,
+            109,
+            30109
+        ));
+        altChains.push(AltChainData(
+            fantomId,
+            FANTOM_SAFE,
+            FANTOM_OFT,
+            FANTOM_ELEVATED,
+            FANTOM_MIM,
+            OFTV2Fantom,
+            112,
+            30112
+        ));
+        altChains.push(AltChainData(
+            optimismId,
+            OPTIMISM_SAFE,
+            OPTIMISM_OFT,
+            OPTIMISM_ELEVATED,
+            OPTIMISM_MIM,
+            OFTV2Optimism,
+            111,
+            30111
+        ));
+        altChains.push(AltChainData(
+            avalancheId,
+            AVALANCHE_SAFE,
+            AVALANCHE_OFT,
+            AVALANCHE_ELEVATED,
+            AVALANCHE_MIM,
+            OFTV2Avalanche,
+            106,
+            30106
+        ));
+        altChains.push(AltChainData(
+            moonriverId,
+            MOONRIVER_SAFE,
+            MOONRIVER_OFT,
+            MOONRIVER_ELEVATED,
+            MOONRIVER_MIM,
+            OFTV2Moonriver,
+            167,
+            30167
+        ));
+        altChains.push(AltChainData(
+            kavaId,
+            KAVA_SAFE,
+            KAVA_OFT,
+            KAVA_ELEVATED,
+            KAVA_MIM,
+            OFTV2Kava,
+            177,
+            30177
+        ));
+        altChains.push(AltChainData(
+            baseId,
+            BASE_SAFE,
+            BASE_OFT,
+            BASE_ELEVATED,
+            BASE_MIM,
+            OFTV2Base,
+            184,
+            30184
+        ));
+        altChains.push(AltChainData(
+            lineaId,
+            LINEA_SAFE,
+            LINEA_OFT,
+            LINEA_ELEVATED,
+            LINEA_MIM,
+            OFTV2Linea,
+            183,
+            30183
+        ));
+        altChains.push(AltChainData(
+            blastId,
+            BLAST_SAFE,
+            BLAST_OFT,
+            BLAST_ELEVATED,
+            BLAST_MIM,
+            OFTV2Blast,
+            243,
+            30243
+        ));
     }
 
     function step1_close_precime_all_chains() public {
@@ -1691,82 +1941,87 @@ contract AbraForkMintBurnMigration is Test {
         step1_close_precrime();
     }
 
-    // ===========================================================
-
     function step2_mint_bridge_total_supply_altchains() public {
-       
-       // ================= ARBITRUM ===================
-       
-        vm.selectFork(arbitrumId);
+        uint16 mainnetEid = 101;
 
-        vm.startPrank(ARBITRUM_SAFE);
+        for (uint i = 0; i < altChains.length; i++) {
+            // console.log("Minting and bridging total supply for chain %s", altChains[i].forkId);
+            AltChainData memory chain = altChains[i];
 
-        // Allow Minting
-        IElevated(ARBITRUM_ELEVATED).setOperator(ARBITRUM_OFT, true);
-        IElevated(ARBITRUM_ELEVATED).setOperator(ARBITRUM_SAFE, true);
+            vm.selectFork(chain.forkId);
 
-        // Mint MIM Total Supply
-        uint arbitrumTotalSupply = IERC20(ARBITRUM_MIM).totalSupply();
-        IElevated(ARBITRUM_ELEVATED).mint(ARBITRUM_SAFE, arbitrumTotalSupply);
+            vm.startPrank(chain.safe);
 
-        // Bridge
-        ILzCommonOFT.LzCallParams memory callParams = ILzCommonOFT.LzCallParams({
-            refundAddress: payable(address(ARBITRUM_SAFE)),
-            zroPaymentAddress: address(0),
-            adapterParams: hex"000200000000000000000000000000000000000000000000000000000000000186a000000000000000000000000000000000000000000000000000000000000000003fa975ac91a8be601e800d4fa777c7200498f975"
-        });
+            // Allow Minting
+            IElevated(chain.elevated).setOperator(chain.oft, true);
+            IElevated(chain.elevated).setOperator(chain.safe, true);
 
-        // Convert the mainnet recipient to bytes32.
-        bytes32 recipientBytes = bytes32(uint256(uint160(MAINNET_V2_ADAPTER)));
-        ILzOFTV2(ARBITRUM_OFT).sendFrom{value: 0.004 ether}(ARBITRUM_SAFE, 101, recipientBytes, arbitrumTotalSupply, callParams);
+            // Mint MIM Total Supply
+            uint totalSupply = IERC20(chain.mim).totalSupply();
+            IElevated(chain.elevated).mint(chain.safe, totalSupply);
 
-        // Disable Minting And Enable On New OFT
-        IElevated(ARBITRUM_ELEVATED).setOperator(ARBITRUM_OFT, false);
-        IElevated(ARBITRUM_ELEVATED).setOperator(ARBITRUM_SAFE, false);
-        IElevated(ARBITRUM_ELEVATED).setOperator(address(mimOFTExisting), true);
+            // Bridge
+            ILzCommonOFT.LzCallParams memory callParams = ILzCommonOFT.LzCallParams({
+                refundAddress: payable(address(chain.safe)),
+                zroPaymentAddress: address(0),
+                adapterParams: hex"000200000000000000000000000000000000000000000000000000000000000186a000000000000000000000000000000000000000000000000000000000000000003fa975ac91a8be601e800d4fa777c7200498f975"
+            });
 
-        vm.stopPrank();
+            // Convert the mainnet recipient to bytes32.
+            bytes32 recipientBytes = bytes32(uint256(uint160(MAINNET_V2_ADAPTER)));
+            uint256 fee = 100 ether;
+            deal(chain.safe, fee);
+            ILzOFTV2(chain.oft).sendFrom{value: fee}(chain.safe, mainnetEid, recipientBytes, totalSupply, callParams);
 
-        bytes memory payload = abi.encodePacked(
-            bytes13(0),
-            MAINNET_V2_ADAPTER,
-            uint64(arbitrumTotalSupply / 1e10) // adjust for ld2sd rate
-        );
+            // Disable Minting And Enable On New OFT
+            IElevated(chain.elevated).setOperator(chain.oft, false);
+            IElevated(chain.elevated).setOperator(chain.safe, false);
+            IElevated(chain.elevated).setOperator(address(chain.oftV2), true);
 
-        // Receive ARB -> ETH transfer
-        vm.selectFork(mainnetId);
-        vm.prank(MAINNET_ENDPOINT);
-        ILayerZero(MAINNET_OFT).lzReceive(110, abi.encodePacked(ARBITRUM_OFT, MAINNET_OFT), 1000, payload);
+            vm.stopPrank();
 
+            bytes memory payload = abi.encodePacked(
+                bytes13(0),
+                MAINNET_V2_ADAPTER,
+                uint64(totalSupply / 1e10) // adjust for ld2sd rate
+            );
 
-        // TODO: Do this for all other altchains as well.
+            // Receive AltChain -> ETH transfer
+            vm.selectFork(mainnetId);
+            vm.prank(MAINNET_ENDPOINT);
+            ILayerZero(MAINNET_OFT).lzReceive(chain.eid, abi.encodePacked(chain.oft, MAINNET_OFT), 1000, payload);
+        }
     }
 
     function test_step2() public {
         step2_mint_bridge_total_supply_altchains();
     }
 
-    // ===========================================================
-
     function step3_activate_mimv2_bridges() public {
-        // Set peers
-        vm.selectFork(arbitrumId);
-        vm.prank(address(this));
-        mimOFTExisting.setPeer(ETH_EID, bytes32(uint256(uint160(MAINNET_V2_ADAPTER))));
+        for (uint i = 0; i < altChains.length; i++) {
+            AltChainData memory chain = altChains[i];
 
-        vm.selectFork(mainnetId);
-        vm.prank(MAINNET_V2_ADAPTER_OWNER); 
-        IOAppSetPeer(MAINNET_V2_ADAPTER).setPeer(ARB_EID, bytes32(uint256(uint160(address(mimOFTExisting)))));
+            // console.log("Setting peer for chain %s", chain.forkId);
 
-        // Set new OFT to be allowed to mint/burn
-        // This has to be done because the new OFT does not debit/credit through the ElevatedMinterBurner
-        vm.selectFork(arbitrumId);
-        vm.prank(ARBITRUM_SAFE);
-        IMIM(ARBITRUM_MIM).setMinter(address(mimOFTExisting));
-        skip(172800);
-        vm.prank(ARBITRUM_SAFE);
-        IMIM(ARBITRUM_MIM).applyMinter();
+            vm.selectFork(chain.forkId);
+            vm.prank(address(this));
+            chain.oftV2.setPeer(ETH_EID, bytes32(uint256(uint160(MAINNET_V2_ADAPTER))));
 
+            vm.selectFork(mainnetId);
+            vm.prank(MAINNET_V2_ADAPTER_OWNER);
+            IOAppSetPeer(MAINNET_V2_ADAPTER).setPeer(chain.eidV2, bytes32(uint256(uint160(address(chain.oftV2)))));
+
+            // Set new OFT to be allowed to mint/burn
+            // Kava, Base, Linea, Blast do not have a elevatedMinterBurner
+            if (chain.forkId != kavaId && chain.forkId != baseId && chain.forkId != lineaId && chain.forkId != blastId) {
+              vm.selectFork(chain.forkId);
+              vm.prank(chain.safe);
+              IMIM(chain.mim).setMinter(address(chain.oftV2));
+              skip(172800);
+              vm.prank(chain.safe);
+              IMIM(chain.mim).applyMinter();
+            }
+        }
     }
 
     function test_step3() public {
@@ -1776,8 +2031,37 @@ contract AbraForkMintBurnMigration is Test {
     // ===========================================================
 
     function test_run_all_steps() public {
-        vm.selectFork(arbitrumId);
-        uint256 arbitrumMIMSupplyBeforeMigration = IERC20(ARBITRUM_MIM).totalSupply();
+        for (uint i = 0; i < altChains.length; i++) {
+            AltChainData memory chain = altChains[i];
+
+            vm.selectFork(chain.forkId);
+            uint256 chainMIMSupplyBeforeMigration = IERC20(chain.mim).totalSupply();
+            if (chain.forkId == arbitrumId) {
+                console.log("Arbitrum supply before migration.........", chainMIMSupplyBeforeMigration);
+            } else if (chain.forkId == bscId) {
+                console.log("BSC supply before migration.............", chainMIMSupplyBeforeMigration);
+            } else if (chain.forkId == polygonId) {
+                console.log("Polygon supply before migration.........", chainMIMSupplyBeforeMigration);
+            } else if (chain.forkId == fantomId) {
+                console.log("Fantom supply before migration.........", chainMIMSupplyBeforeMigration);
+            } else if (chain.forkId == optimismId) {
+                console.log("Optimism supply before migration.......", chainMIMSupplyBeforeMigration);
+            } else if (chain.forkId == avalancheId) {
+                console.log("Avalanche supply before migration......", chainMIMSupplyBeforeMigration);
+            } else if (chain.forkId == moonriverId) {
+                console.log("Moonriver supply before migration......", chainMIMSupplyBeforeMigration);
+            } else if (chain.forkId == kavaId) {
+                console.log("Kava supply before migration..........", chainMIMSupplyBeforeMigration);
+            } else if (chain.forkId == baseId) {
+                console.log("Base supply before migration..........", chainMIMSupplyBeforeMigration);
+            } else if (chain.forkId == lineaId) {
+                console.log("Linea supply before migration.........", chainMIMSupplyBeforeMigration);
+            } else if (chain.forkId == blastId) {
+                console.log("Blast supply before migration.........", chainMIMSupplyBeforeMigration);
+                console.log("");
+            }
+        }
+
         vm.selectFork(mainnetId);
         uint256 mainnetMIMBalanceAdapterBeforeMigration = IERC20(MAINNET_MIM).balanceOf(MAINNET_V2_ADAPTER);
         uint256 mainnetMIMSupplyBeforeMigration = IERC20(MAINNET_MIM).totalSupply();
@@ -1785,16 +2069,41 @@ contract AbraForkMintBurnMigration is Test {
         step1_close_precrime();
         step2_mint_bridge_total_supply_altchains();
         step3_activate_mimv2_bridges();
-        
-        vm.selectFork(arbitrumId);
-        uint256 arbitrumMIMSupplyAfterMigration = IERC20(ARBITRUM_MIM).totalSupply();
+
+        for (uint i = 0; i < altChains.length; i++) {
+            AltChainData memory chain = altChains[i];
+
+            vm.selectFork(chain.forkId);
+            uint256 chainMIMSupplyAfterMigration = IERC20(chain.mim).totalSupply();
+
+            // Notice how theres a slight discrepency due to dust from LayerZero scaling
+            if (chain.forkId == arbitrumId) {
+                console.log("Arbitrum supply after migration.........", chainMIMSupplyAfterMigration);
+            } else if (chain.forkId == bscId) {
+                console.log("BSC supply after migration.............", chainMIMSupplyAfterMigration);
+            } else if (chain.forkId == polygonId) {
+                console.log("Polygon supply after migration.........", chainMIMSupplyAfterMigration);
+            } else if (chain.forkId == fantomId) {
+                console.log("Fantom supply after migration.........", chainMIMSupplyAfterMigration);
+            } else if (chain.forkId == optimismId) {
+                console.log("Optimism supply after migration.......", chainMIMSupplyAfterMigration);
+            } else if (chain.forkId == avalancheId) {
+                console.log("Avalanche supply after migration......", chainMIMSupplyAfterMigration);
+            } else if (chain.forkId == moonriverId) {
+                console.log("Moonriver supply after migration......", chainMIMSupplyAfterMigration);
+            } else if (chain.forkId == kavaId) {
+                console.log("Kava supply after migration..........", chainMIMSupplyAfterMigration);
+            } else if (chain.forkId == baseId) {
+                console.log("Base supply after migration..........", chainMIMSupplyAfterMigration);
+            } else if (chain.forkId == lineaId) {
+                console.log("Linea supply after migration.........", chainMIMSupplyAfterMigration);
+            } else if (chain.forkId == blastId) {
+                console.log("Blast supply after migration.........", chainMIMSupplyAfterMigration);
+            }
+        }
         vm.selectFork(mainnetId);
         uint256 mainnetMIMBalanceAdapterAfterMigration = IERC20(MAINNET_MIM).balanceOf(MAINNET_V2_ADAPTER);
         uint256 mainnetMIMSupplyAfterMigration = IERC20(MAINNET_MIM).totalSupply();
-
-        // Notice how theres a slight discrepency due to dust from LayerZero scaling
-        console.log("Arbitrum supply before migration....................", arbitrumMIMSupplyBeforeMigration);
-        console.log("Arbitrum supply after migration.....................", arbitrumMIMSupplyAfterMigration);
 
         console.log("Mainnet Adapter Balance before migration............", mainnetMIMBalanceAdapterBeforeMigration);
         console.log("Mainnet Adapter Balance after migration.............", mainnetMIMBalanceAdapterAfterMigration);
@@ -1807,19 +2116,21 @@ contract AbraForkMintBurnMigration is Test {
     function test_transfer_mim_arb_to_mainnet() public {
       test_run_all_steps();
 
+      uint32 ARB_EID = 30110;
+
       // Set peers
       vm.selectFork(arbitrumId);
       vm.prank(address(this));
-      mimOFTExisting.setPeer(ETH_EID, bytes32(uint256(uint160(MAINNET_V2_ADAPTER))));
+      OFTV2Arbitrum.setPeer(ETH_EID, bytes32(uint256(uint160(MAINNET_V2_ADAPTER))));
 
       vm.selectFork(mainnetId);
       vm.prank(MAINNET_V2_ADAPTER_OWNER); // owner
-      IOAppSetPeer(MAINNET_V2_ADAPTER).setPeer(ARB_EID, bytes32(uint256(uint160(address(mimOFTExisting)))));
+      IOAppSetPeer(MAINNET_V2_ADAPTER).setPeer(ARB_EID, bytes32(uint256(uint160(address(OFTV2Arbitrum)))));
 
       // Set new OFT to be allowed to mint/burn
       vm.selectFork(arbitrumId);
       vm.prank(ARBITRUM_SAFE);
-      IMIM(ARBITRUM_MIM).setMinter(address(mimOFTExisting));
+      IMIM(ARBITRUM_MIM).setMinter(address(OFTV2Arbitrum));
       skip(172800);
       vm.prank(ARBITRUM_SAFE);
       IMIM(ARBITRUM_MIM).applyMinter();
@@ -1839,10 +2150,10 @@ contract AbraForkMintBurnMigration is Test {
           "",
           ""
       );
-      MessagingFee memory fee = mimOFTExisting.quoteSend(sendParam, false);
+      MessagingFee memory fee = OFTV2Arbitrum.quoteSend(sendParam, false);
 
       vm.prank(ARBITRUM_SAFE);
-      mimOFTExisting.send{ value: fee.nativeFee }(sendParam, fee, payable(address(ARBITRUM_SAFE)));
+      OFTV2Arbitrum.send{ value: fee.nativeFee }(sendParam, fee, payable(address(ARBITRUM_SAFE)));
 
       uint256 arbMIMBalanceAfter = IERC20(ARBITRUM_MIM).balanceOf(ARBITRUM_SAFE);
       assertEq(arbMIMBalanceAfter, arbMIMBalanceBefore - tokensToSend);
@@ -1854,7 +2165,7 @@ contract AbraForkMintBurnMigration is Test {
       (bytes memory message, ) = OFTMsgCodec.encode(OFTComposeMsgCodec.addressToBytes32(address(ARBITRUM_SAFE)), uint64(tokensToSend / 1e12), "");
 
       IOAppReceiver(MAINNET_V2_ADAPTER).lzReceive(
-        Origin(ARB_EID, bytes32(uint256(uint160(address(mimOFTExisting)))), 0),
+        Origin(ARB_EID, bytes32(uint256(uint160(address(OFTV2Arbitrum)))), 0),
         0,
         message,
         address(MAINNET_V2_ADAPTER),
