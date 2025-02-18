@@ -94,7 +94,7 @@ const config: HardhatUserConfig = {
             accounts,
             verify: {
                 etherscan: {
-                    apiUrl: 'https://api.routescan.io/v2/network/mainnet/evm/80094/etherscan',
+                    apiUrl: 'https://api.berascan.com',
                     apiKey: process.env.BERA_ETHERSCAN_KEY || '',
                 }
             },
