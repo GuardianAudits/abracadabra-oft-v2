@@ -1486,20 +1486,54 @@ contract AbraForkMintBurnMigration is Test {
     address constant ARBITRUM_MIM = 0xFEa7a6a0B346362BF88A9e4A88416B77a57D6c2A;
     address constant ARBITRUM_V2_ENDPOINT = 0x1a44076050125825900e736c501f859c50fE728c;
 
+    address constant BSC_SAFE = 0x9d9bC38bF4A128530EA45A7d27D0Ccb9C2EbFaf6;
+    address constant POLYGON_SAFE = 0x7d847c4A0151FC6e79C6042D8f5B811753f4F66e;
+    address constant FANTOM_SAFE = 0xb4ad8B57Bd6963912c80FCbb6Baea99988543c1c;
+    address constant OPTIMISM_SAFE = 0x4217AA01360846A849d2A89809d450D10248B513;
+    address constant AVALANCHE_SAFE = 0xae64A325027C3C14Cf6abC7818aA3B9c07F5C799;
+    address constant MOONRIVER_SAFE = 0xfc88aa661C44B4EdE197644ba971764AC59AFa62;
+    address constant KAVA_SAFE = 0x1261894F79E6CF21bF7E586Af7905Ec173C8805b;
+    address constant BASE_SAFE = 0xF657dE126f9D7666b5FFE4756CcD9EB393d86a92;
+    address constant LINEA_SAFE = 0x1c063276CF810957cf0665903FAd20d008f4b404;
+    address constant BLAST_SAFE = 0xfED8589d09650dB3D30a568b1e194882549D78cF;
+
+    address constant BSC_OFT = 0x41D5A04B4e03dC27dC1f5C5A576Ad2187bc601Af;
+    address constant POLYGON_OFT = 0xca0d86afc25c57a6d2aCdf331CaBd4C9CEE05533;
+    address constant FANTOM_OFT = 0xc5c01568a3B5d8c203964049615401Aaf0783191;
+    address constant OPTIMISM_OFT = 0x48686c24697fe9042531B64D792304e514E74339;
+    address constant AVALANCHE_OFT = 0xB3a66127cCB143bFB01D3AECd3cE9D17381B130d;
+    address constant MOONRIVER_OFT = 0xeF2dBDfeC54c466F7Ff92C9c5c75aBB6794f0195;
+    address constant KAVA_OFT = 0xc7a161Cfd0e133d289B13692b636B8e8B5CD8d8c;
+    address constant BASE_OFT = 0x4035957323FC05AD9704230E3dc1E7663091d262;
+    address constant LINEA_OFT = 0x60bbeFE16DC584f9AF10138Da1dfbB4CDf25A097;
+    address constant BLAST_OFT = 0xcA8A205a579e06Cb1bE137EA3A5E5698C091f018;
+
+    address constant BSC_ELEVATED = 0x79533F85479e04d2214305638B6586b724beC951;
+    address constant POLYGON_ELEVATED = 0x8E7982492f6D330d0E1AAB9e110d7dfFc69C20fc;
+    address constant FANTOM_ELEVATED = 0x64C65549C10D86De6F00C3B0D5132d8f742Af8C4;
+    address constant OPTIMISM_ELEVATED = 0x1E188DD74adf8CC95c98714407e88a4a99b759A5;
+    address constant AVALANCHE_ELEVATED = 0x9BA780f8a517E2245892a388427973C8b7c3B769;
+    address constant MOONRIVER_ELEVATED = 0x6e858b0DD9a9Dcdf710B28C236292E30ba079728;
+    address constant KAVA_ELEVATED = 0x471EE749bA270eb4c1165B5AD95E614947f6fCeb;
+    address constant BASE_ELEVATED = 0x4A3A6Dd60A34bB2Aba60D73B4C88315E9CeB6A3D;
+    address constant LINEA_ELEVATED = 0xDD3B8084AF79B9BaE3D1b668c0De08CCC2C9429A;
+    address constant BLAST_ELEVATED = 0x76DA31D7C9CbEAE102aff34D3398bC450c8374c1;
+
     uint32 constant ETH_EID = 30101;
     uint32 constant ARB_EID = 30110;
 
     uint arbitrumId;
     uint mainnetId;
-    uint bscID;
+    uint bscId;
     uint polygonId;
-    uint ftmId;
+    uint fantomId;
     uint optimismId;
     uint moonriverId;
     uint kavaId;
     uint baseId;
     uint lineaId;
     uint blastId;
+    uint avalancheId;
 
     AbraOFTUpgradeableExisting mimOFTExisting;
     address public proxyAdmin = makeAddr("proxyAdmin");
@@ -1516,41 +1550,140 @@ contract AbraForkMintBurnMigration is Test {
         );
 
         mainnetId = vm.createFork(vm.rpcUrl("mainnet"), 21845805);
-        bscID = vm.createFork(vm.rpcUrl("bsc"));
-        polygonId = vm.createFork(vm.rpcUrl("polygon"));
-        ftmId = vm.createFork(vm.rpcUrl("ftm"));
+        bscId = vm.createFork(vm.rpcUrl("bsc"), 46751901);
+        polygonId = vm.createFork(vm.rpcUrl("polygon"), 68053239);
+        fantomId = vm.createFork(vm.rpcUrl("ftm"));
         optimismId = vm.createFork(vm.rpcUrl("optimism"));
         moonriverId = vm.createFork(vm.rpcUrl("moonriver"));
         kavaId = vm.createFork(vm.rpcUrl("kava"));
-        baseId = vm.createFork(vm.rpcUrl("base"));
+        baseId = vm.createFork(vm.rpcUrl("base"), 26523912);
         lineaId = vm.createFork(vm.rpcUrl("linea"));
         blastId = vm.createFork(vm.rpcUrl("blast"));
+        avalancheId = vm.createFork(vm.rpcUrl("avalanche"));
     }
 
     function step1_close_precime_all_chains() public {
+        // ETH
         vm.selectFork(mainnetId);
-
         vm.prank(MAINNET_SAFE);
         ILayerZero(MAINNET_OFT).setPrecrime(address(0));
 
+        // Arbitrum
         vm.selectFork(arbitrumId);
         vm.prank(ARBITRUM_SAFE);
         ILayerZero(ARBITRUM_OFT).setPrecrime(address(0));
 
-        // TODO Add all other chains.
+        // BSC
+        vm.selectFork(bscId);
+        vm.prank(BSC_SAFE);
+        ILayerZero(BSC_OFT).setPrecrime(address(0));
+
+        // POLYGON
+        vm.selectFork(polygonId);
+        vm.prank(POLYGON_SAFE);
+        ILayerZero(POLYGON_OFT).setPrecrime(address(0));
+
+        // FANTOM
+        vm.selectFork(fantomId);
+        vm.prank(FANTOM_SAFE);
+        ILayerZero(FANTOM_OFT).setPrecrime(address(0));
+
+        // OPTIMISM
+        vm.selectFork(optimismId);
+        vm.prank(OPTIMISM_SAFE);
+        ILayerZero(OPTIMISM_OFT).setPrecrime(address(0));
+
+        // AVALANCHE
+        vm.selectFork(avalancheId);
+        vm.prank(AVALANCHE_SAFE);
+        ILayerZero(AVALANCHE_OFT).setPrecrime(address(0));
+
+
+        // MOONRIVER
+        vm.selectFork(moonriverId);
+        vm.prank(MOONRIVER_SAFE);
+        ILayerZero(MOONRIVER_OFT).setPrecrime(address(0));
+
+
+        // KAVA
+        vm.selectFork(kavaId);
+        vm.prank(KAVA_SAFE);
+        ILayerZero(KAVA_OFT).setPrecrime(address(0));
+
+        // BASE
+        vm.selectFork(baseId);
+        vm.prank(BASE_SAFE);
+        ILayerZero(BASE_OFT).setPrecrime(address(0));
+
+        // LINEA
+        vm.selectFork(lineaId);
+        vm.prank(LINEA_SAFE);
+        ILayerZero(LINEA_OFT).setPrecrime(address(0));
+
+        // BLAST
+        vm.selectFork(blastId);
+        vm.prank(BLAST_SAFE);
+        ILayerZero(BLAST_OFT).setPrecrime(address(0));
     }
 
     function step1_close_mint_burn_altchains() public {
         vm.selectFork(arbitrumId);
-
         vm.prank(ARBITRUM_SAFE);
         IElevated(ARBITRUM_ELEVATED).setOperator(ARBITRUM_OFT, false);
 
-        // TODO Add all other altchains.
+        // BSC
+        vm.selectFork(bscId);
+        vm.prank(BSC_SAFE);
+        IElevated(BSC_ELEVATED).setOperator(BSC_OFT, false);
+
+        // POLYGON
+        vm.selectFork(polygonId);
+        vm.prank(POLYGON_SAFE);
+        IElevated(POLYGON_ELEVATED).setOperator(POLYGON_OFT, false);
+
+        // FANTOM
+        vm.selectFork(fantomId);
+        vm.prank(FANTOM_SAFE);
+        IElevated(FANTOM_ELEVATED).setOperator(FANTOM_OFT, false);
+
+        // OPTIMISM
+        vm.selectFork(optimismId);
+        vm.prank(OPTIMISM_SAFE);
+        IElevated(OPTIMISM_ELEVATED).setOperator(OPTIMISM_OFT, false);
+
+        // AVALANCHE
+        vm.selectFork(avalancheId);
+        vm.prank(AVALANCHE_SAFE);
+        IElevated(AVALANCHE_ELEVATED).setOperator(AVALANCHE_OFT, false);
+
+        // MOONRIVER
+        vm.selectFork(moonriverId);
+        vm.prank(MOONRIVER_SAFE);
+        IElevated(MOONRIVER_ELEVATED).setOperator(MOONRIVER_OFT, false);
+
+        // KAVA
+        vm.selectFork(kavaId);
+        vm.prank(KAVA_SAFE);
+        IElevated(KAVA_ELEVATED).setOperator(KAVA_OFT, false);
+
+        // BASE
+        vm.selectFork(baseId);
+        vm.prank(BASE_SAFE);
+        IElevated(BASE_ELEVATED).setOperator(BASE_OFT, false);
+
+        // LINEA
+        vm.selectFork(lineaId);
+        vm.prank(LINEA_SAFE);
+        IElevated(LINEA_ELEVATED).setOperator(LINEA_OFT, false);
+
+        // BLAST
+        vm.selectFork(blastId);
+        vm.prank(BLAST_SAFE);
+        IElevated(BLAST_ELEVATED).setOperator(BLAST_OFT, false);
     }
 
     function step1_close_precrime() public {
-        step1_close_precime_all_chains();
+        // step1_close_precime_all_chains();
         step1_close_mint_burn_altchains();
     }
 
@@ -1680,15 +1813,15 @@ contract AbraForkMintBurnMigration is Test {
       mimOFTExisting.setPeer(ETH_EID, bytes32(uint256(uint160(MAINNET_V2_ADAPTER))));
 
       vm.selectFork(mainnetId);
-      vm.prank(0xDF2C270f610Dc35d8fFDA5B453E74db5471E126B); // owner
+      vm.prank(MAINNET_V2_ADAPTER_OWNER); // owner
       IOAppSetPeer(MAINNET_V2_ADAPTER).setPeer(ARB_EID, bytes32(uint256(uint160(address(mimOFTExisting)))));
 
       // Set new OFT to be allowed to mint/burn
       vm.selectFork(arbitrumId);
-      vm.prank(0xf46BB6dDA9709C49EfB918201D97F6474EAc5Aea);
+      vm.prank(ARBITRUM_SAFE);
       IMIM(ARBITRUM_MIM).setMinter(address(mimOFTExisting));
       skip(172800);
-      vm.prank(0xf46BB6dDA9709C49EfB918201D97F6474EAc5Aea);
+      vm.prank(ARBITRUM_SAFE);
       IMIM(ARBITRUM_MIM).applyMinter();
 
       // Send tokens from arb to mainnet
