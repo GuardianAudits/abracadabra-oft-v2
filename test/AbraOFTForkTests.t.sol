@@ -2037,27 +2037,27 @@ contract AbraForkMintBurnMigration is Test {
             vm.selectFork(chain.forkId);
             uint256 chainMIMSupplyBeforeMigration = IERC20(chain.mim).totalSupply();
             if (chain.forkId == arbitrumId) {
-                console.log("Arbitrum supply before migration.........", chainMIMSupplyBeforeMigration);
+                console.log("Arbitrum supply before migration........", chainMIMSupplyBeforeMigration);
             } else if (chain.forkId == bscId) {
                 console.log("BSC supply before migration.............", chainMIMSupplyBeforeMigration);
             } else if (chain.forkId == polygonId) {
                 console.log("Polygon supply before migration.........", chainMIMSupplyBeforeMigration);
             } else if (chain.forkId == fantomId) {
-                console.log("Fantom supply before migration.........", chainMIMSupplyBeforeMigration);
+                console.log("Fantom supply before migration..........", chainMIMSupplyBeforeMigration);
             } else if (chain.forkId == optimismId) {
-                console.log("Optimism supply before migration.......", chainMIMSupplyBeforeMigration);
+                console.log("Optimism supply before migration........", chainMIMSupplyBeforeMigration);
             } else if (chain.forkId == avalancheId) {
-                console.log("Avalanche supply before migration......", chainMIMSupplyBeforeMigration);
+                console.log("Avalanche supply before migration.......", chainMIMSupplyBeforeMigration);
             } else if (chain.forkId == moonriverId) {
-                console.log("Moonriver supply before migration......", chainMIMSupplyBeforeMigration);
+                console.log("Moonriver supply before migration.......", chainMIMSupplyBeforeMigration);
             } else if (chain.forkId == kavaId) {
-                console.log("Kava supply before migration..........", chainMIMSupplyBeforeMigration);
+                console.log("Kava supply before migration............", chainMIMSupplyBeforeMigration);
             } else if (chain.forkId == baseId) {
-                console.log("Base supply before migration..........", chainMIMSupplyBeforeMigration);
+                console.log("Base supply before migration............", chainMIMSupplyBeforeMigration);
             } else if (chain.forkId == lineaId) {
-                console.log("Linea supply before migration.........", chainMIMSupplyBeforeMigration);
+                console.log("Linea supply before migration...........", chainMIMSupplyBeforeMigration);
             } else if (chain.forkId == blastId) {
-                console.log("Blast supply before migration.........", chainMIMSupplyBeforeMigration);
+                console.log("Blast supply before migration...........", chainMIMSupplyBeforeMigration);
                 console.log("");
             }
         }
@@ -2080,37 +2080,37 @@ contract AbraForkMintBurnMigration is Test {
             if (chain.forkId == arbitrumId) {
                 console.log("Arbitrum supply after migration.........", chainMIMSupplyAfterMigration);
             } else if (chain.forkId == bscId) {
-                console.log("BSC supply after migration.............", chainMIMSupplyAfterMigration);
+                console.log("BSC supply after migration..............", chainMIMSupplyAfterMigration);
             } else if (chain.forkId == polygonId) {
-                console.log("Polygon supply after migration.........", chainMIMSupplyAfterMigration);
+                console.log("Polygon supply after migration..........", chainMIMSupplyAfterMigration);
             } else if (chain.forkId == fantomId) {
-                console.log("Fantom supply after migration.........", chainMIMSupplyAfterMigration);
+                console.log("Fantom supply after migration...........", chainMIMSupplyAfterMigration);
             } else if (chain.forkId == optimismId) {
-                console.log("Optimism supply after migration.......", chainMIMSupplyAfterMigration);
+                console.log("Optimism supply after migration.........", chainMIMSupplyAfterMigration);
             } else if (chain.forkId == avalancheId) {
-                console.log("Avalanche supply after migration......", chainMIMSupplyAfterMigration);
+                console.log("Avalanche supply after migration........", chainMIMSupplyAfterMigration);
             } else if (chain.forkId == moonriverId) {
-                console.log("Moonriver supply after migration......", chainMIMSupplyAfterMigration);
+                console.log("Moonriver supply after migration........", chainMIMSupplyAfterMigration);
             } else if (chain.forkId == kavaId) {
-                console.log("Kava supply after migration..........", chainMIMSupplyAfterMigration);
+                console.log("Kava supply after migration.............", chainMIMSupplyAfterMigration);
             } else if (chain.forkId == baseId) {
-                console.log("Base supply after migration..........", chainMIMSupplyAfterMigration);
+                console.log("Base supply after migration.............", chainMIMSupplyAfterMigration);
             } else if (chain.forkId == lineaId) {
-                console.log("Linea supply after migration.........", chainMIMSupplyAfterMigration);
+                console.log("Linea supply after migration............", chainMIMSupplyAfterMigration);
             } else if (chain.forkId == blastId) {
-                console.log("Blast supply after migration.........", chainMIMSupplyAfterMigration);
+                console.log("Blast supply after migration............", chainMIMSupplyAfterMigration);
             }
         }
         vm.selectFork(mainnetId);
         uint256 mainnetMIMBalanceAdapterAfterMigration = IERC20(MAINNET_MIM).balanceOf(MAINNET_V2_ADAPTER);
         uint256 mainnetMIMSupplyAfterMigration = IERC20(MAINNET_MIM).totalSupply();
 
-        console.log("Mainnet Adapter Balance before migration............", mainnetMIMBalanceAdapterBeforeMigration);
-        console.log("Mainnet Adapter Balance after migration.............", mainnetMIMBalanceAdapterAfterMigration);
-
+        console.log();
+        console.log("ETH Adapter Balance before migration....", mainnetMIMBalanceAdapterBeforeMigration);
+        console.log("ETH Adapter Balance after migration.....", mainnetMIMBalanceAdapterAfterMigration);
         // Total supply stays the same
-        console.log("Mainnet supply before migration.....................", mainnetMIMSupplyBeforeMigration);
-        console.log("Mainnet supply after migration......................", mainnetMIMSupplyAfterMigration);
+        console.log("ETH supply before migration.............", mainnetMIMSupplyBeforeMigration);
+        console.log("ETH supply after migration..............", mainnetMIMSupplyAfterMigration);
     }
 
     function test_transfer_mim_arb_to_mainnet() public {
