@@ -1536,6 +1536,7 @@ contract AbraForkMintBurnMigration is Test {
     address constant LINEA_V2_ENDPOINT = 0x1a44076050125825900e736c501f859c50fE728c;
     address constant BLAST_V2_ENDPOINT = 0x1a44076050125825900e736c501f859c50fE728c;
     address constant AVALANCHE_V2_ENDPOINT = 0x1a44076050125825900e736c501f859c50fE728c;
+    address constant FANTOM_V1_ENDPOINT = 0xb6319cC6c8c27A8F5dAF0dD3DF91EA35C4720dd7;
 
     uint32 constant ETH_EID = 30101;
 
@@ -1929,7 +1930,7 @@ contract AbraForkMintBurnMigration is Test {
     }
 
     function step1_close_precrime() public {
-        // step1_close_precime_all_chains();
+        step1_close_precime_all_chains();
         step1_close_mint_burn_altchains();
     }
 
@@ -2027,11 +2028,258 @@ contract AbraForkMintBurnMigration is Test {
     // ===========================================================
 
     function test_run_all_steps() public {
+        uint sumAltchainSuppliesBefore = _logBefore();
+
+        vm.selectFork(mainnetId);
+        uint256 mainnetMIMBalanceAdapterBeforeMigration = IERC20(MAINNET_MIM).balanceOf(MAINNET_V2_ADAPTER);
+        uint256 mainnetMIMSupplyBeforeMigration = IERC20(MAINNET_MIM).totalSupply();
+
+        step1_close_precrime();
+        step2_mint_bridge_total_supply_altchains();
+        step3_activate_mimv2_bridges();
+
+        uint sumAltchainSuppliesAfter = _logAfter();
+
+        vm.selectFork(mainnetId);
+        uint256 mainnetMIMBalanceAdapterAfterMigration = IERC20(MAINNET_MIM).balanceOf(MAINNET_V2_ADAPTER);
+        uint256 mainnetMIMSupplyAfterMigration = IERC20(MAINNET_MIM).totalSupply();
+
+        console.log();
+        console.log("ETH Adapter Balance before migration....", mainnetMIMBalanceAdapterBeforeMigration);
+        console.log("ETH Adapter Balance after migration.....", mainnetMIMBalanceAdapterAfterMigration);
+        // Total supply stays the same
+        console.log("ETH supply before migration.............", mainnetMIMSupplyBeforeMigration);
+        console.log("ETH supply after migration..............", mainnetMIMSupplyAfterMigration);
+        assertEq(mainnetMIMSupplyBeforeMigration, mainnetMIMSupplyAfterMigration);
+        assertApproxEqAbs(sumAltchainSuppliesBefore, sumAltchainSuppliesAfter, 1e11); 
+    }
+
+    function test_transfer_mim_arb_to_mainnet() public {
+        test_run_all_steps();
+
+        uint32 ARB_EID = 30110;
+
+        // Set peers
+        vm.selectFork(arbitrumId);
+        vm.prank(address(this));
+        OFTV2Arbitrum.setPeer(ETH_EID, bytes32(uint256(uint160(MAINNET_V2_ADAPTER))));
+
+        vm.selectFork(mainnetId);
+        vm.prank(MAINNET_V2_ADAPTER_OWNER); // owner
+        IOAppSetPeer(MAINNET_V2_ADAPTER).setPeer(ARB_EID, bytes32(uint256(uint160(address(OFTV2Arbitrum)))));
+
+        // Set new OFT to be allowed to mint/burn
+        vm.selectFork(arbitrumId);
+        vm.prank(ARBITRUM_SAFE);
+        IMIM(ARBITRUM_MIM).setMinter(address(OFTV2Arbitrum));
+        skip(172800);
+        vm.prank(ARBITRUM_SAFE);
+        IMIM(ARBITRUM_MIM).applyMinter();
+
+        // Send tokens from arb to mainnet
+        vm.selectFork(arbitrumId);
+        uint256 arbMIMBalanceBefore = IERC20(ARBITRUM_MIM).balanceOf(ARBITRUM_SAFE);
+
+        uint256 tokensToSend = 1 ether;
+        bytes memory options = OptionsBuilder.newOptions().addExecutorLzReceiveOption(200000, 0);
+        SendParam memory sendParam = SendParam(
+            ETH_EID,
+            bytes32(uint256(uint160(ARBITRUM_SAFE))),
+            tokensToSend,
+            tokensToSend,
+            options,
+            "",
+            ""
+        );
+        MessagingFee memory fee = OFTV2Arbitrum.quoteSend(sendParam, false);
+        
+        deal(address(OFTV2Arbitrum), 10 ether);
+        uint oftNativeBalBefore = address(OFTV2Arbitrum).balance;
+        vm.prank(ARBITRUM_SAFE);
+        OFTV2Arbitrum.send(sendParam, fee, payable(address(ARBITRUM_SAFE)));
+        uint oftNativeBalAfter = address(OFTV2Arbitrum).balance;
+        // Note how user does not have to send msg.value since the balance in the OFT contract can be used
+        // console.log("oftNativeBalBefore.........", oftNativeBalBefore);
+        // console.log("oftNativeBalAfter..........", oftNativeBalAfter);
+
+        uint256 arbMIMBalanceAfter = IERC20(ARBITRUM_MIM).balanceOf(ARBITRUM_SAFE);
+        assertEq(arbMIMBalanceAfter, arbMIMBalanceBefore - tokensToSend);
+
+        // Receive tokens on mainnet
+        vm.selectFork(mainnetId);
+        uint256 mainnetMIMBalanceBefore = IERC20(MAINNET_MIM).balanceOf(ARBITRUM_SAFE);
+        vm.startPrank(MAINNET_V2_ENDPOINT);
+        (bytes memory message, ) = OFTMsgCodec.encode(OFTComposeMsgCodec.addressToBytes32(address(ARBITRUM_SAFE)), uint64(tokensToSend / 1e12), "");
+
+        IOAppReceiver(MAINNET_V2_ADAPTER).lzReceive(
+            Origin(ARB_EID, bytes32(uint256(uint160(address(OFTV2Arbitrum)))), 0),
+            0,
+            message,
+            address(MAINNET_V2_ADAPTER),
+            ""
+        );
+
+        uint256 mainnetMIMBalanceAfter = IERC20(MAINNET_MIM).balanceOf(ARBITRUM_SAFE);
+        assertEq(mainnetMIMBalanceAfter, mainnetMIMBalanceBefore + tokensToSend);
+    }
+
+    function test_bridge_between_steps() public {
+        uint sumAltchainSuppliesBefore = _logBefore();
+
+        vm.selectFork(mainnetId);
+        uint256 mainnetMIMBalanceAdapterBeforeMigration = IERC20(MAINNET_MIM).balanceOf(MAINNET_V2_ADAPTER);
+        uint256 mainnetMIMSupplyBeforeMigration = IERC20(MAINNET_MIM).totalSupply();
+
+        step1_close_precime_all_chains();
+
+        // Bridge from Arbitrum to Fantom 100 MIM
+        ILzCommonOFT.LzCallParams memory callParams = ILzCommonOFT.LzCallParams({
+            refundAddress: payable(address(ARBITRUM_SAFE)),
+            zroPaymentAddress: address(0),
+            adapterParams: hex"000200000000000000000000000000000000000000000000000000000000000186a000000000000000000000000000000000000000000000000000000000000000003fa975ac91a8be601e800d4fa777c7200498f975"
+        });
+
+        bytes32 recipientBytes = bytes32(uint256(uint160(FANTOM_SAFE)));
+        uint256 fee = 1 ether;
+        uint256 transferAmount = 1000 ether;
+        
+        // ============== SEND ARBITRUM TO FANTOM TRANSFER ===============
+        vm.selectFork(arbitrumId);
+        deal(ARBITRUM_SAFE, fee);
+        vm.startPrank(ARBITRUM_SAFE);
+        ILzOFTV2(ARBITRUM_OFT).sendFrom{value: fee}(ARBITRUM_SAFE, 112, recipientBytes, transferAmount, callParams);
+        vm.stopPrank();
+       
+        bytes memory payload = abi.encodePacked(
+            bytes13(0),
+            FANTOM_SAFE,
+            uint64(transferAmount / 1e10) // adjust for ld2sd rate
+        );
+
+        // Note: Can toggle this so Arbitrum -> FTM is recevied right after send.
+        bool receiveMessageInstant = true;
+        if (receiveMessageInstant) {
+            // Receive Arbitrum -> FTM Message 
+            vm.selectFork(fantomId);
+            uint ftmBalanceBefore =  IERC20(FANTOM_MIM).balanceOf(FANTOM_SAFE);
+            vm.prank(FANTOM_V1_ENDPOINT);
+            ILayerZero(FANTOM_OFT).lzReceive(110, abi.encodePacked(ARBITRUM_OFT, FANTOM_OFT), 1000, payload);
+            uint ftmBalanceAfter =  IERC20(FANTOM_MIM).balanceOf(FANTOM_SAFE);
+            assertEq(ftmBalanceBefore + transferAmount, ftmBalanceAfter);
+        }
+        // ============== RECEIVED ARBITRUM TO FANTOM TRANSFER ===============
+        
+
+        // ============== SEND MAINNET TO FANTOM TRANSFER ===============
+        vm.selectFork(mainnetId);
+        transferAmount = IERC20(MAINNET_MIM).balanceOf(MAINNET_SAFE) / 2;
+        uint addedAltChainSupply = transferAmount;
+
+        deal(MAINNET_SAFE, fee);
+        vm.startPrank(MAINNET_SAFE);
+        IERC20(MAINNET_MIM).approve(MAINNET_OFT, transferAmount);
+        ILzOFTV2(MAINNET_OFT).sendFrom{value: fee}(MAINNET_SAFE, 112, recipientBytes, transferAmount, callParams);
+        vm.stopPrank();
+       
+        payload = abi.encodePacked(
+            bytes13(0),
+            FANTOM_SAFE,
+            uint64(transferAmount / 1e10) // adjust for ld2sd rate
+        );
+
+        {
+
+            // Receive Mainnet -> FTM Message 
+            vm.selectFork(fantomId);
+            uint ftmBalanceBefore =  IERC20(FANTOM_MIM).balanceOf(FANTOM_SAFE);
+            vm.prank(FANTOM_V1_ENDPOINT);
+            ILayerZero(FANTOM_OFT).lzReceive(101, abi.encodePacked(MAINNET_OFT, FANTOM_OFT), 1001, payload);
+            uint ftmBalanceAfter =  IERC20(FANTOM_MIM).balanceOf(FANTOM_SAFE);
+            // console.log("Mainnet -> FTM transfer amount........", transferAmount);
+            // console.log("ftmBalanceBefore........", ftmBalanceBefore);
+            // console.log("ftmBalanceAfter.........", ftmBalanceAfter);
+            assertApproxEqAbs(ftmBalanceBefore + transferAmount, ftmBalanceAfter, 1e10, "Mainnet->Fantom balance not increased properly");
+        }
+        // ============== RECEIVED MAINNET TO FANTOM TRANSFER ===============
+
+        step1_close_mint_burn_altchains();
+
+        // Attempt another receipt (should fail since operator is disabled)
+        if (!receiveMessageInstant) {
+            // Receive Arbitrum -> FTM Message 
+            vm.selectFork(fantomId);
+            uint ftmBalanceBefore =  IERC20(FANTOM_MIM).balanceOf(FANTOM_SAFE);
+            vm.prank(FANTOM_V1_ENDPOINT);
+            ILayerZero(FANTOM_OFT).lzReceive(110, abi.encodePacked(ARBITRUM_OFT, FANTOM_OFT), 1000, payload);
+            uint ftmBalanceAfter =  IERC20(FANTOM_MIM).balanceOf(FANTOM_SAFE);
+            assertEq(ftmBalanceBefore, ftmBalanceAfter, "FTM Balance Should Not Change When Messaging Disabled");
+        }
+
+        step2_mint_bridge_total_supply_altchains();
+
+        // Attempt another receipt (should fail since operator is disabled)
+        if (!receiveMessageInstant) {
+            // Receive Arbitrum -> FTM Message 
+            vm.selectFork(fantomId);
+            uint ftmBalanceBefore =  IERC20(FANTOM_MIM).balanceOf(FANTOM_SAFE);
+            vm.prank(FANTOM_V1_ENDPOINT);
+            ILayerZero(FANTOM_OFT).lzReceive(110, abi.encodePacked(ARBITRUM_OFT, FANTOM_OFT), 1000, payload);
+            uint ftmBalanceAfter =  IERC20(FANTOM_MIM).balanceOf(FANTOM_SAFE);
+            assertEq(ftmBalanceBefore, ftmBalanceAfter, "FTM Balance Should Not Change When Messaging Disabled");
+        }
+
+        // Showcase that Mainnet can still send messages during the migration process
+        vm.selectFork(mainnetId);
+        transferAmount = IERC20(MAINNET_MIM).balanceOf(MAINNET_SAFE);
+        deal(MAINNET_SAFE, fee);
+        vm.startPrank(MAINNET_SAFE);
+        IERC20(MAINNET_MIM).approve(MAINNET_OFT, transferAmount);
+        ILzOFTV2(MAINNET_OFT).sendFrom{value: fee}(MAINNET_SAFE, 112, recipientBytes, transferAmount, callParams);
+        vm.stopPrank();
+       
+        step3_activate_mimv2_bridges();
+
+        if (!receiveMessageInstant) {
+            // Receive Arbitrum -> FTM Message 
+            vm.selectFork(fantomId);
+            uint ftmBalanceBefore =  IERC20(FANTOM_MIM).balanceOf(FANTOM_SAFE);
+            // Duplicate receipts should not change supply.
+            vm.prank(FANTOM_V1_ENDPOINT);
+            ILayerZero(FANTOM_OFT).lzReceive(110, abi.encodePacked(ARBITRUM_OFT, FANTOM_OFT), 1000, payload);
+            vm.prank(FANTOM_V1_ENDPOINT);
+            ILayerZero(FANTOM_OFT).lzReceive(110, abi.encodePacked(ARBITRUM_OFT, FANTOM_OFT), 1001, payload);
+            uint ftmBalanceAfter =  IERC20(FANTOM_MIM).balanceOf(FANTOM_SAFE);
+            assertEq(ftmBalanceBefore, ftmBalanceAfter, "FTM Balance Should Not Change When Messaging Disabled");
+        }
+
+
+        uint sumAltchainSuppliesAfter = _logAfter();
+
+        vm.selectFork(mainnetId);
+        uint256 mainnetMIMBalanceAdapterAfterMigration = IERC20(MAINNET_MIM).balanceOf(MAINNET_V2_ADAPTER);
+        uint256 mainnetMIMSupplyAfterMigration = IERC20(MAINNET_MIM).totalSupply();
+
+        console.log();
+        console.log("ETH Adapter Balance before migration....", mainnetMIMBalanceAdapterBeforeMigration);
+        console.log("ETH Adapter Balance after migration.....", mainnetMIMBalanceAdapterAfterMigration);
+        console.log("MIM Altchain Total Supply...............", sumAltchainSuppliesAfter);
+        assertLe(sumAltchainSuppliesAfter, mainnetMIMBalanceAdapterAfterMigration);
+        // Total supply stays the same
+        console.log("ETH supply before migration.............", mainnetMIMSupplyBeforeMigration);
+        console.log("ETH supply after migration..............", mainnetMIMSupplyAfterMigration);
+        assertEq(mainnetMIMSupplyBeforeMigration, mainnetMIMSupplyAfterMigration);
+        // If transfer from Arbitrum -> FTM is prevented with receiveMessageInstant=false, will be off by that transfer amount.
+        // assertApproxEqAbs(sumAltchainSuppliesBefore + addedAltChainSupply, sumAltchainSuppliesAfter, 1e11); 
+    }
+
+    function _logBefore() internal returns(uint sumAltchainSupplies) {
         for (uint i = 0; i < altChains.length; i++) {
             AltChainData memory chain = altChains[i];
 
             vm.selectFork(chain.forkId);
             uint256 chainMIMSupplyBeforeMigration = IERC20(chain.mim).totalSupply();
+            sumAltchainSupplies += chainMIMSupplyBeforeMigration;
+
             if (chain.forkId == arbitrumId) {
                 console.log("Arbitrum supply before migration........", chainMIMSupplyBeforeMigration);
             } else if (chain.forkId == bscId) {
@@ -2057,20 +2305,15 @@ contract AbraForkMintBurnMigration is Test {
                 console.log("");
             }
         }
+    }
 
-        vm.selectFork(mainnetId);
-        uint256 mainnetMIMBalanceAdapterBeforeMigration = IERC20(MAINNET_MIM).balanceOf(MAINNET_V2_ADAPTER);
-        uint256 mainnetMIMSupplyBeforeMigration = IERC20(MAINNET_MIM).totalSupply();
-
-        step1_close_precrime();
-        step2_mint_bridge_total_supply_altchains();
-        step3_activate_mimv2_bridges();
-
+    function _logAfter() internal returns(uint sumAltchainSupplies) {
         for (uint i = 0; i < altChains.length; i++) {
             AltChainData memory chain = altChains[i];
 
             vm.selectFork(chain.forkId);
             uint256 chainMIMSupplyAfterMigration = IERC20(chain.mim).totalSupply();
+            sumAltchainSupplies += chainMIMSupplyAfterMigration;
 
             // Notice how theres a slight discrepency due to dust from LayerZero scaling
             if (chain.forkId == arbitrumId) {
@@ -2097,78 +2340,6 @@ contract AbraForkMintBurnMigration is Test {
                 console.log("Blast supply after migration............", chainMIMSupplyAfterMigration);
             }
         }
-        vm.selectFork(mainnetId);
-        uint256 mainnetMIMBalanceAdapterAfterMigration = IERC20(MAINNET_MIM).balanceOf(MAINNET_V2_ADAPTER);
-        uint256 mainnetMIMSupplyAfterMigration = IERC20(MAINNET_MIM).totalSupply();
-
-        console.log();
-        console.log("ETH Adapter Balance before migration....", mainnetMIMBalanceAdapterBeforeMigration);
-        console.log("ETH Adapter Balance after migration.....", mainnetMIMBalanceAdapterAfterMigration);
-        // Total supply stays the same
-        console.log("ETH supply before migration.............", mainnetMIMSupplyBeforeMigration);
-        console.log("ETH supply after migration..............", mainnetMIMSupplyAfterMigration);
     }
 
-    function test_transfer_mim_arb_to_mainnet() public {
-      test_run_all_steps();
-
-      uint32 ARB_EID = 30110;
-
-      // Set peers
-      vm.selectFork(arbitrumId);
-      vm.prank(address(this));
-      OFTV2Arbitrum.setPeer(ETH_EID, bytes32(uint256(uint160(MAINNET_V2_ADAPTER))));
-
-      vm.selectFork(mainnetId);
-      vm.prank(MAINNET_V2_ADAPTER_OWNER); // owner
-      IOAppSetPeer(MAINNET_V2_ADAPTER).setPeer(ARB_EID, bytes32(uint256(uint160(address(OFTV2Arbitrum)))));
-
-      // Set new OFT to be allowed to mint/burn
-      vm.selectFork(arbitrumId);
-      vm.prank(ARBITRUM_SAFE);
-      IMIM(ARBITRUM_MIM).setMinter(address(OFTV2Arbitrum));
-      skip(172800);
-      vm.prank(ARBITRUM_SAFE);
-      IMIM(ARBITRUM_MIM).applyMinter();
-
-      // Send tokens from arb to mainnet
-      vm.selectFork(arbitrumId);
-      uint256 arbMIMBalanceBefore = IERC20(ARBITRUM_MIM).balanceOf(ARBITRUM_SAFE);
-
-      uint256 tokensToSend = 1 ether;
-      bytes memory options = OptionsBuilder.newOptions().addExecutorLzReceiveOption(200000, 0);
-      SendParam memory sendParam = SendParam(
-          ETH_EID,
-          bytes32(uint256(uint160(ARBITRUM_SAFE))),
-          tokensToSend,
-          tokensToSend,
-          options,
-          "",
-          ""
-      );
-      MessagingFee memory fee = OFTV2Arbitrum.quoteSend(sendParam, false);
-
-      vm.prank(ARBITRUM_SAFE);
-      OFTV2Arbitrum.send{ value: fee.nativeFee }(sendParam, fee, payable(address(ARBITRUM_SAFE)));
-
-      uint256 arbMIMBalanceAfter = IERC20(ARBITRUM_MIM).balanceOf(ARBITRUM_SAFE);
-      assertEq(arbMIMBalanceAfter, arbMIMBalanceBefore - tokensToSend);
-
-      // Receive tokens on mainnet
-      vm.selectFork(mainnetId);
-      uint256 mainnetMIMBalanceBefore = IERC20(MAINNET_MIM).balanceOf(ARBITRUM_SAFE);
-      vm.startPrank(MAINNET_V2_ENDPOINT);
-      (bytes memory message, ) = OFTMsgCodec.encode(OFTComposeMsgCodec.addressToBytes32(address(ARBITRUM_SAFE)), uint64(tokensToSend / 1e12), "");
-
-      IOAppReceiver(MAINNET_V2_ADAPTER).lzReceive(
-        Origin(ARB_EID, bytes32(uint256(uint160(address(OFTV2Arbitrum)))), 0),
-        0,
-        message,
-        address(MAINNET_V2_ADAPTER),
-        ""
-      );
-
-      uint256 mainnetMIMBalanceAfter = IERC20(MAINNET_MIM).balanceOf(ARBITRUM_SAFE);
-      assertEq(mainnetMIMBalanceAfter, mainnetMIMBalanceBefore + tokensToSend);
-    }
 }
