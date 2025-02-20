@@ -20,9 +20,15 @@ const configurations = {
     },
     'arbitrum-mainnet': {
         contractName: 'AbraOFTUpgradeableExisting',
-        args: (endpointAddress: string) => [0xFEa7a6a0B346362BF88A9e4A88416B77a57D6c2A, endpointAddress], // MIM oft endpoint v1 address
+        args: (endpointAddress: string) => [0x26F20d6Dee51ad59AF339BEdF9f721113D01b6b3, endpointAddress], // Using MIM Elevated Minter/Burner address
         initializeArgs: (signer: string) => [signer],
         feeHandler: '0xE66BE95FE4E3889a66925d996AF3E4dC173754a2'
+    },
+    'optimism-mainnet': {
+        contractName: 'AbraOFTUpgradeableExisting',
+        args: (endpointAddress: string) => [0x1E188DD74adf8CC95c98714407e88a4a99b759A5, endpointAddress], // Using MIM Elevated Minter/Burner address
+        initializeArgs: (signer: string) => [signer],
+        feeHandler: ''
     }
 }
 
