@@ -23,6 +23,7 @@ abstract contract SenderWithFees is OAppSenderUpgradeable {
         MessagingFee memory _fee,
         address _refundAddress
     ) internal virtual override returns (MessagingReceipt memory receipt) {
+        uint256 msgValue = msg.value;
         uint256 protocolNativeFees;
 
         if (feeHandler != address(0)) {
@@ -44,12 +45,14 @@ abstract contract SenderWithFees is OAppSenderUpgradeable {
             require(success, "FEE_TRANSFER_FAILED");
             emit FeeCollected(protocolNativeFees);
 
-            _fee.nativeFee -= protocolNativeFees;
+            msgValue -= protocolNativeFees;
         }
+
+        require(msgValue >= _fee.nativeFee, "INSUFFICIENT_NATIVE_FEE");
 
         return
             // solhint-disable-next-line check-send-result
-            endpoint.send{ value: _fee.nativeFee }(
+            endpoint.send{ value: msgValue }(
                 MessagingParams(_dstEid, _getPeerOrRevert(_dstEid), _message, _options, _fee.lzTokenFee > 0),
                 _refundAddress
             );
