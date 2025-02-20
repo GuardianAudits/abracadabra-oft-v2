@@ -48,8 +48,6 @@ abstract contract SenderWithFees is OAppSenderUpgradeable {
             msgValue -= protocolNativeFees;
         }
 
-        require(msgValue >= _fee.nativeFee, "INSUFFICIENT_NATIVE_FEE");
-
         return
             // solhint-disable-next-line check-send-result
             endpoint.send{ value: msgValue }(
