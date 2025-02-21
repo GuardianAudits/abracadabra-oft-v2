@@ -183,7 +183,7 @@ contract AbraOFTUpgradeableTest is TestHelperOz5 {
         );
 
         // Test fixed native fee quote
-        uint256 nativeFee = feeHandler.quoteNativeFee(bEid, "", "", 0, 0);
+        uint256 nativeFee = feeHandler.quoteNativeFee();
         assertEq(nativeFee, 1 ether);
 
         // Test oracle quote type
@@ -193,7 +193,7 @@ contract AbraOFTUpgradeableTest is TestHelperOz5 {
         feeHandler = new FeeHandler(1 ether, address(mockAggregator), address(this), QuoteType.Oracle, address(this));
 
         // Test oracle-based fee quote
-        nativeFee = feeHandler.quoteNativeFee(bEid, "", "", 0, 0);
+        nativeFee = feeHandler.quoteNativeFee();
         // Expected fee should be $1 worth of ETH at $2000/ETH rate
         assertEq(nativeFee, 0.0005 ether);
 
@@ -243,7 +243,7 @@ contract AbraOFTUpgradeableTest is TestHelperOz5 {
 
         MessagingFee memory fee = aOFT.quoteSend(sendParam, false);
 
-        uint256 feeHandlerFee = feeHandler.quoteNativeFee(bEid, "", "", fee.nativeFee, fee.lzTokenFee);
+        uint256 feeHandlerFee = feeHandler.quoteNativeFee();
 
         // Record initial balances
         uint256 feeToInitialBalance = feeTo.balance;

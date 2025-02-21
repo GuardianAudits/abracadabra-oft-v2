@@ -27,13 +27,7 @@ abstract contract SenderWithFees is OAppSenderUpgradeable {
         uint256 protocolNativeFees;
 
         if (feeHandler != address(0)) {
-            protocolNativeFees = IFeeHandler(feeHandler).quoteNativeFee(
-                _dstEid,
-                _message,
-                _options,
-                _fee.nativeFee,
-                _fee.lzTokenFee
-            );
+            protocolNativeFees = IFeeHandler(feeHandler).quoteNativeFee();
         }
 
         if (_fee.lzTokenFee > 0) {
@@ -65,13 +59,7 @@ abstract contract SenderWithFees is OAppSenderUpgradeable {
         fee = super._quote(_dstEid, _message, _options, _payInLzToken);
 
         if (feeHandler != address(0)) {
-            fee.nativeFee += IFeeHandler(feeHandler).quoteNativeFee(
-                _dstEid,
-                _message,
-                _options,
-                fee.nativeFee,
-                fee.lzTokenFee
-            );
+            fee.nativeFee += IFeeHandler(feeHandler).quoteNativeFee();
         }
     }
 }
