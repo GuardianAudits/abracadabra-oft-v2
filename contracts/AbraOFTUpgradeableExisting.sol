@@ -10,18 +10,17 @@ import { IMintable } from "./interfaces/IMintable.sol";
 import { IERC20Metadata } from "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
 
 contract AbraOFTUpgradeableExisting is OFTCoreUpgradeable, SenderWithFees {
-    IMintable internal immutable token_;
-
-    function token() external view returns (address) {
-        return address(token_);
-    }
+    address public immutable token;
+    address public immutable minterBurner;
 
     constructor(
         address _token,
+        address _minterBurner,
         address _lzEndpoint
     ) OFTCoreUpgradeable(IERC20Metadata(_token).decimals(), _lzEndpoint) {
         _disableInitializers();
-        token_ = IMintable(_token);
+        token = _token;
+        minterBurner = _minterBurner;
     }
 
     function initialize(address _delegate) public virtual initializer {
@@ -60,7 +59,7 @@ contract AbraOFTUpgradeableExisting is OFTCoreUpgradeable, SenderWithFees {
         // therefore amountSentLD CAN differ from amountReceivedLD.
 
         // @dev Default OFT burns on src.
-        token_.burn(_from, amountSentLD);
+        IMintable(minterBurner).burn(_from, amountSentLD);
     }
 
     /**
@@ -77,7 +76,7 @@ contract AbraOFTUpgradeableExisting is OFTCoreUpgradeable, SenderWithFees {
     ) internal virtual override returns (uint256 amountReceivedLD) {
         if (_to == address(0x0)) _to = address(0xdead); // _mint(...) does not support address(0x0)
         // @dev Default OFT mints on dst.
-        token_.mint(_to, _amountLD);
+        IMintable(minterBurner).mint(_to, _amountLD);
         // @dev In the case of NON-default OFT, the _amountLD MIGHT not be == amountReceivedLD.
         return _amountLD;
     }

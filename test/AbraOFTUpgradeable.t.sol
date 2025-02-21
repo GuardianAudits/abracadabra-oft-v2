@@ -381,7 +381,7 @@ contract AbraOFTUpgradeableExistingTest is TestHelperOz5 {
             TestHelper.deployContractAndProxy(
                 proxyAdmin,
                 type(AbraOFTUpgradeableExisting).creationCode,
-                abi.encode(address(aToken), address(endpoints[aEid])),
+                abi.encode(address(aToken),address(aToken), address(endpoints[aEid])),
                 abi.encodeWithSelector(AbraOFTUpgradeableExisting.initialize.selector, address(this))
             )
         );
@@ -390,7 +390,7 @@ contract AbraOFTUpgradeableExistingTest is TestHelperOz5 {
             TestHelper.deployContractAndProxy(
                 proxyAdmin,
                 type(AbraOFTUpgradeableExisting).creationCode,
-                abi.encode(address(bToken), address(endpoints[bEid])),
+                abi.encode(address(bToken), address(bToken), address(endpoints[bEid])),
                 abi.encodeWithSelector(AbraOFTUpgradeableExisting.initialize.selector, address(this))
             )
         );
