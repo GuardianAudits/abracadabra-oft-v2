@@ -22,6 +22,9 @@ import { TransparentUpgradeableProxy } from "hardhat-deploy/solc_0.8/openzeppeli
 import { OptionsBuilder } from "@layerzerolabs/oapp-evm/contracts/oapp/libs/OptionsBuilder.sol";
 import { OFTMsgCodec } from "@layerzerolabs/oft-evm/contracts/libs/OFTMsgCodec.sol";
 import { Origin } from "@layerzerolabs/lz-evm-protocol-v2/contracts/interfaces/ILayerZeroEndpointV2.sol";
+import { IFeeHandler } from "contracts/interfaces/IFeeHandler.sol";
+import { FeeHandler, QuoteType } from "contracts/FeeHandler.sol";
+
 
 library TestHelper {
     function deployContractAndProxy(
@@ -1478,6 +1481,7 @@ contract AbraForkMintBurnMigration is Test {
     address constant ARBITRUM_PRECRIME = 0xD0b97bd475f53767DBc7aDcD70f499000Edc916C;
     address constant ARBITRUM_OFT = 0x957A8Af7894E76e16DB17c2A913496a4E60B7090;
     address constant ARBITRUM_ELEVATED = 0x26F20d6Dee51ad59AF339BEdF9f721113D01b6b3;
+    address constant ARBITRUM_FEE_HANDLER = 0xE66BE95FE4E3889a66925d996AF3E4dC173754a2;
 
     address constant BSC_SAFE = 0x9d9bC38bF4A128530EA45A7d27D0Ccb9C2EbFaf6;
     address constant POLYGON_SAFE = 0x7d847c4A0151FC6e79C6042D8f5B811753f4F66e;
@@ -1564,6 +1568,7 @@ contract AbraForkMintBurnMigration is Test {
     AbraOFTUpgradeableExisting OFTV2Linea;
     AbraOFTUpgradeableExisting OFTV2Blast;
     AbraOFTUpgradeableExisting OFTV2Avalanche;
+    IFeeHandler arbitrumFeeHandler;
 
     struct AltChainData {
         uint forkId;
@@ -1580,6 +1585,8 @@ contract AbraForkMintBurnMigration is Test {
 
     address public proxyAdmin = makeAddr("proxyAdmin");
 
+    receive() external payable {}
+
     function setUp() public {
         mainnetId = vm.createFork(vm.rpcUrl("mainnet"), 21845805);
 
@@ -1592,6 +1599,8 @@ contract AbraForkMintBurnMigration is Test {
                 abi.encodeWithSelector(AbraOFTUpgradeableExisting.initialize.selector, address(this))
             )
         );
+        arbitrumFeeHandler = new FeeHandler(1e15, address(0), address(this), QuoteType.Fixed, address(this));
+        OFTV2Arbitrum.setFeeHandler(address(arbitrumFeeHandler));
 
         bscId = vm.createSelectFork(vm.rpcUrl("bsc"), 46751901);
         OFTV2Bsc = AbraOFTUpgradeableExisting(
@@ -2057,6 +2066,10 @@ contract AbraForkMintBurnMigration is Test {
     function test_transfer_mim_arb_to_mainnet() public {
         test_run_all_steps();
 
+        console.log();
+        console.log("============ arbitrum to mainnet ==============");
+        _logBefore();
+
         uint32 ARB_EID = 30110;
 
         // Set peers
@@ -2067,14 +2080,6 @@ contract AbraForkMintBurnMigration is Test {
         vm.selectFork(mainnetId);
         vm.prank(MAINNET_V2_ADAPTER_OWNER); // owner
         IOAppSetPeer(MAINNET_V2_ADAPTER).setPeer(ARB_EID, bytes32(uint256(uint160(address(OFTV2Arbitrum)))));
-
-        // Set new OFT to be allowed to mint/burn
-        vm.selectFork(arbitrumId);
-        vm.prank(ARBITRUM_SAFE);
-        IMIM(ARBITRUM_MIM).setMinter(address(OFTV2Arbitrum));
-        skip(172800);
-        vm.prank(ARBITRUM_SAFE);
-        IMIM(ARBITRUM_MIM).applyMinter();
 
         // Send tokens from arb to mainnet
         vm.selectFork(arbitrumId);
@@ -2093,16 +2098,16 @@ contract AbraForkMintBurnMigration is Test {
         );
         MessagingFee memory fee = OFTV2Arbitrum.quoteSend(sendParam, false);
         
-        deal(address(OFTV2Arbitrum), 10 ether);
+        deal(ARBITRUM_SAFE, 10 ether);
         uint oftNativeBalBefore = address(OFTV2Arbitrum).balance;
+        // console.log("Arbitrum safe balance before.....", address(ARBITRUM_SAFE).balance);
+        // console.log("fee..............................", fee.nativeFee);
         vm.prank(ARBITRUM_SAFE);
-        OFTV2Arbitrum.send{value: fee.nativeFee}(sendParam, fee, payable(address(ARBITRUM_SAFE)));
+        OFTV2Arbitrum.send{value: 10 ether}(sendParam, fee, payable(address(ARBITRUM_SAFE)));
         uint oftNativeBalAfter = address(OFTV2Arbitrum).balance;
-        // Note how user does not have to send msg.value since the balance in the OFT contract can be used
-        // console.log("oftNativeBalBefore.........", oftNativeBalBefore);
-        // console.log("oftNativeBalAfter..........", oftNativeBalAfter);
-
         uint256 arbMIMBalanceAfter = IERC20(ARBITRUM_MIM).balanceOf(ARBITRUM_SAFE);
+        // console.log("Arbitrum safe balance after......", address(ARBITRUM_SAFE).balance);
+        assertEq(oftNativeBalBefore, oftNativeBalAfter, "Arbitrum OFT balance should not increase and excess should be refunded");
         assertEq(arbMIMBalanceAfter, arbMIMBalanceBefore - tokensToSend);
 
         // Receive tokens on mainnet
@@ -2121,6 +2126,106 @@ contract AbraForkMintBurnMigration is Test {
 
         uint256 mainnetMIMBalanceAfter = IERC20(MAINNET_MIM).balanceOf(ARBITRUM_SAFE);
         assertEq(mainnetMIMBalanceAfter, mainnetMIMBalanceBefore + tokensToSend);
+        vm.stopPrank();
+        // ===================================
+
+        // Mainet -> Arbitrum
+        // Send tokens from mainnet to arb
+        vm.selectFork(mainnetId);
+        uint ethMIMBalanceBefore = IERC20(MAINNET_MIM).balanceOf(MAINNET_SAFE);
+
+        tokensToSend = 10 ether;
+        options = OptionsBuilder.newOptions().addExecutorLzReceiveOption(200000, 0);
+        sendParam = SendParam(
+            ARB_EID,
+            bytes32(uint256(uint160(MAINNET_SAFE))),
+            tokensToSend,
+            tokensToSend,
+            options,
+            "",
+            ""
+        );
+        fee = AbraOFTUpgradeableExisting(MAINNET_V2_ADAPTER).quoteSend(sendParam, false);
+        
+        deal(address(MAINNET_SAFE), 1 ether);
+        oftNativeBalBefore = address(MAINNET_V2_ADAPTER).balance;
+        vm.prank(MAINNET_SAFE);
+        IERC20(MAINNET_MIM).approve(MAINNET_V2_ADAPTER, tokensToSend);
+        vm.prank(MAINNET_SAFE);
+        AbraOFTUpgradeableExisting(MAINNET_V2_ADAPTER).send{value: fee.nativeFee}(sendParam, fee, payable(address(ARBITRUM_SAFE)));
+        oftNativeBalAfter = address(MAINNET_V2_ADAPTER).balance;
+        // Note that the existing Mainnet V2 adapter does not refund excess. If more than the quoted fee was sent, 
+        // there would balance leftover in the adapter contract.
+        assertEq(oftNativeBalBefore, oftNativeBalAfter, "quoted fee should be accurate so nothing is leftover in the adapter");
+        uint ethMIMBalanceAfter = IERC20(MAINNET_MIM).balanceOf(MAINNET_SAFE);
+        assertEq(ethMIMBalanceAfter, ethMIMBalanceBefore - tokensToSend);
+
+        // Receive tokens on arbitrum
+        vm.selectFork(arbitrumId);
+        arbMIMBalanceBefore = IERC20(ARBITRUM_MIM).balanceOf(MAINNET_SAFE);
+        vm.startPrank(ARBITRUM_V2_ENDPOINT);
+        (message, ) = OFTMsgCodec.encode(OFTComposeMsgCodec.addressToBytes32(address(MAINNET_SAFE)), uint64(tokensToSend / 1e12), "");
+
+        IOAppReceiver(address(OFTV2Arbitrum)).lzReceive(
+            Origin(ETH_EID, bytes32(uint256(uint160(address(MAINNET_V2_ADAPTER)))), 0),
+            0,
+            message,
+            address(OFTV2Arbitrum),
+            ""
+        );
+
+        arbMIMBalanceAfter = IERC20(ARBITRUM_MIM).balanceOf(MAINNET_SAFE);
+        assertEq(arbMIMBalanceAfter, arbMIMBalanceBefore + tokensToSend);
+        vm.stopPrank();
+
+        // ===================================
+
+        // Mainet -> Base
+        // Send tokens from mainnet to base
+        vm.selectFork(mainnetId);
+        ethMIMBalanceBefore = IERC20(MAINNET_MIM).balanceOf(MAINNET_SAFE);
+
+        tokensToSend = 10 ether;
+        options = OptionsBuilder.newOptions().addExecutorLzReceiveOption(200000, 0);
+        sendParam = SendParam(
+            30184,
+            bytes32(uint256(uint160(MAINNET_SAFE))),
+            tokensToSend,
+            tokensToSend,
+            options,
+            "",
+            ""
+        );
+        fee = AbraOFTUpgradeableExisting(MAINNET_V2_ADAPTER).quoteSend(sendParam, false);
+        
+        deal(address(MAINNET_SAFE), 1 ether);
+        oftNativeBalBefore = address(MAINNET_V2_ADAPTER).balance;
+        vm.prank(MAINNET_SAFE);
+        IERC20(MAINNET_MIM).approve(MAINNET_V2_ADAPTER, tokensToSend);
+        vm.prank(MAINNET_SAFE);
+        AbraOFTUpgradeableExisting(MAINNET_V2_ADAPTER).send{value: 1 ether}(sendParam, fee, payable(address(ARBITRUM_SAFE)));
+        oftNativeBalAfter = address(MAINNET_V2_ADAPTER).balance;
+        ethMIMBalanceAfter = IERC20(MAINNET_MIM).balanceOf(MAINNET_SAFE);
+        assertEq(ethMIMBalanceAfter, ethMIMBalanceBefore - tokensToSend);
+
+        // Receive tokens on base
+        vm.selectFork(baseId);
+        uint baseMIMBalanceBefore = IERC20(BASE_MIM).balanceOf(MAINNET_SAFE);
+        vm.startPrank(BASE_V2_ENDPOINT);
+        (message, ) = OFTMsgCodec.encode(OFTComposeMsgCodec.addressToBytes32(address(MAINNET_SAFE)), uint64(tokensToSend / 1e12), "");
+
+        IOAppReceiver(address(OFTV2Base)).lzReceive(
+            Origin(ETH_EID, bytes32(uint256(uint160(address(MAINNET_V2_ADAPTER)))), 0),
+            0,
+            message,
+            address(OFTV2Base),
+            ""
+        );
+
+        uint baseMIMBalanceAfter = IERC20(BASE_MIM).balanceOf(MAINNET_SAFE);
+        assertEq(baseMIMBalanceAfter, baseMIMBalanceBefore + tokensToSend);
+
+        _logAfter();
     }
 
     function test_bridge_between_steps() public {
@@ -2250,6 +2355,23 @@ contract AbraForkMintBurnMigration is Test {
             ILayerZero(FANTOM_OFT).lzReceive(110, abi.encodePacked(ARBITRUM_OFT, FANTOM_OFT), 1001, payload);
             uint ftmBalanceAfter =  IERC20(FANTOM_MIM).balanceOf(FANTOM_SAFE);
             assertEq(ftmBalanceBefore, ftmBalanceAfter, "FTM Balance Should Not Change When Messaging Disabled");
+        }
+
+        payload = abi.encodePacked(
+            bytes13(0),
+            FANTOM_SAFE,
+            uint64(transferAmount / 1e10) // adjust for ld2sd rate
+        );
+
+        {
+
+            // Receive Mainnet -> FTM Message 
+            vm.selectFork(fantomId);
+            uint ftmBalanceBefore =  IERC20(FANTOM_MIM).balanceOf(FANTOM_SAFE);
+            vm.prank(FANTOM_V1_ENDPOINT);
+            ILayerZero(FANTOM_OFT).lzReceive(101, abi.encodePacked(MAINNET_OFT, FANTOM_OFT), 1002, payload);
+            uint ftmBalanceAfter =  IERC20(FANTOM_MIM).balanceOf(FANTOM_SAFE);
+            assertApproxEqAbs(ftmBalanceBefore, ftmBalanceAfter, 0, "#2 Mainnet->Fantom balance should not increase");
         }
 
 
