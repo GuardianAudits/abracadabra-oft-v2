@@ -1588,7 +1588,7 @@ contract AbraForkMintBurnMigration is Test {
             TestHelper.deployContractAndProxy(
                 proxyAdmin,
                 type(AbraOFTUpgradeableExisting).creationCode,
-                abi.encode(address(ARBITRUM_MIM), address(ARBITRUM_V2_ENDPOINT)),
+                abi.encode(address(ARBITRUM_MIM), ARBITRUM_ELEVATED, address(ARBITRUM_V2_ENDPOINT)),
                 abi.encodeWithSelector(AbraOFTUpgradeableExisting.initialize.selector, address(this))
             )
         );
@@ -1598,7 +1598,7 @@ contract AbraForkMintBurnMigration is Test {
             TestHelper.deployContractAndProxy(
                 proxyAdmin,
                 type(AbraOFTUpgradeableExisting).creationCode,
-                abi.encode(address(BSC_MIM), address(BSC_V2_ENDPOINT)),
+                abi.encode(address(BSC_MIM), BSC_ELEVATED, address(BSC_V2_ENDPOINT)),
                 abi.encodeWithSelector(AbraOFTUpgradeableExisting.initialize.selector, address(this))
             )
         );
@@ -1608,7 +1608,7 @@ contract AbraForkMintBurnMigration is Test {
             TestHelper.deployContractAndProxy(
                 proxyAdmin,
                 type(AbraOFTUpgradeableExisting).creationCode,
-                abi.encode(address(POLYGON_MIM), address(POLYGON_V2_ENDPOINT)),
+                abi.encode(address(POLYGON_MIM), POLYGON_ELEVATED, address(POLYGON_V2_ENDPOINT)),
                 abi.encodeWithSelector(AbraOFTUpgradeableExisting.initialize.selector, address(this))
             )
         );
@@ -1618,7 +1618,7 @@ contract AbraForkMintBurnMigration is Test {
             TestHelper.deployContractAndProxy(
                 proxyAdmin,
                 type(AbraOFTUpgradeableExisting).creationCode,
-                abi.encode(address(FANTOM_MIM), address(FANTOM_V2_ENDPOINT)),
+                abi.encode(address(FANTOM_MIM), FANTOM_ELEVATED, address(FANTOM_V2_ENDPOINT)),
                 abi.encodeWithSelector(AbraOFTUpgradeableExisting.initialize.selector, address(this))
             )
         );
@@ -1628,7 +1628,7 @@ contract AbraForkMintBurnMigration is Test {
             TestHelper.deployContractAndProxy(
                 proxyAdmin,
                 type(AbraOFTUpgradeableExisting).creationCode,
-                abi.encode(address(OPTIMISM_MIM), address(OPTIMISM_V2_ENDPOINT)),
+                abi.encode(address(OPTIMISM_MIM), OPTIMISM_ELEVATED, address(OPTIMISM_V2_ENDPOINT)),
                 abi.encodeWithSelector(AbraOFTUpgradeableExisting.initialize.selector, address(this))
             )
         );
@@ -1638,7 +1638,7 @@ contract AbraForkMintBurnMigration is Test {
             TestHelper.deployContractAndProxy(
                 proxyAdmin,
                 type(AbraOFTUpgradeableExisting).creationCode,
-                abi.encode(address(MOONRIVER_MIM), address(MOONRIVER_V2_ENDPOINT)),
+                abi.encode(address(MOONRIVER_MIM), MOONRIVER_ELEVATED, address(MOONRIVER_V2_ENDPOINT)),
                 abi.encodeWithSelector(AbraOFTUpgradeableExisting.initialize.selector, address(this))
             )
         );
@@ -1648,7 +1648,7 @@ contract AbraForkMintBurnMigration is Test {
             TestHelper.deployContractAndProxy(
                 proxyAdmin,
                 type(AbraOFTUpgradeableExisting).creationCode,
-                abi.encode(address(KAVA_MIM), address(KAVA_V2_ENDPOINT)),
+                abi.encode(address(KAVA_MIM), KAVA_ELEVATED, address(KAVA_V2_ENDPOINT)),
                 abi.encodeWithSelector(AbraOFTUpgradeableExisting.initialize.selector, address(this))
             )
         );
@@ -1658,7 +1658,7 @@ contract AbraForkMintBurnMigration is Test {
             TestHelper.deployContractAndProxy(
                 proxyAdmin,
                 type(AbraOFTUpgradeableExisting).creationCode,
-                abi.encode(address(BASE_MIM), address(BASE_V2_ENDPOINT)),
+                abi.encode(address(BASE_MIM), BASE_ELEVATED, address(BASE_V2_ENDPOINT)),
                 abi.encodeWithSelector(AbraOFTUpgradeableExisting.initialize.selector, address(this))
             )
         );
@@ -1668,7 +1668,7 @@ contract AbraForkMintBurnMigration is Test {
             TestHelper.deployContractAndProxy(
                 proxyAdmin,
                 type(AbraOFTUpgradeableExisting).creationCode,
-                abi.encode(address(LINEA_MIM), address(LINEA_V2_ENDPOINT)),
+                abi.encode(address(LINEA_MIM), LINEA_ELEVATED, address(LINEA_V2_ENDPOINT)),
                 abi.encodeWithSelector(AbraOFTUpgradeableExisting.initialize.selector, address(this))
             )
         );
@@ -1678,7 +1678,7 @@ contract AbraForkMintBurnMigration is Test {
             TestHelper.deployContractAndProxy(
                 proxyAdmin,
                 type(AbraOFTUpgradeableExisting).creationCode,
-                abi.encode(address(BLAST_MIM), address(BLAST_V2_ENDPOINT)),
+                abi.encode(address(BLAST_MIM), BLAST_ELEVATED, address(BLAST_V2_ENDPOINT)),
                 abi.encodeWithSelector(AbraOFTUpgradeableExisting.initialize.selector, address(this))
             )
         );
@@ -1688,7 +1688,7 @@ contract AbraForkMintBurnMigration is Test {
             TestHelper.deployContractAndProxy(
                 proxyAdmin,
                 type(AbraOFTUpgradeableExisting).creationCode,
-                abi.encode(address(AVALANCHE_MIM), address(AVALANCHE_V2_ENDPOINT)),
+                abi.encode(address(AVALANCHE_MIM), AVALANCHE_ELEVATED, address(AVALANCHE_V2_ENDPOINT)),
                 abi.encodeWithSelector(AbraOFTUpgradeableExisting.initialize.selector, address(this))
             )
         );
@@ -2096,7 +2096,7 @@ contract AbraForkMintBurnMigration is Test {
         deal(address(OFTV2Arbitrum), 10 ether);
         uint oftNativeBalBefore = address(OFTV2Arbitrum).balance;
         vm.prank(ARBITRUM_SAFE);
-        OFTV2Arbitrum.send(sendParam, fee, payable(address(ARBITRUM_SAFE)));
+        OFTV2Arbitrum.send{value: fee.nativeFee}(sendParam, fee, payable(address(ARBITRUM_SAFE)));
         uint oftNativeBalAfter = address(OFTV2Arbitrum).balance;
         // Note how user does not have to send msg.value since the balance in the OFT contract can be used
         // console.log("oftNativeBalBefore.........", oftNativeBalBefore);
